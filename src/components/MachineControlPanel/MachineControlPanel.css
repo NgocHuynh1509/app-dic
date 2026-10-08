@@ -1,0 +1,229 @@
+.mcp {
+  position: fixed;
+  width: 260px;
+  background: #121824; /* Nền tối xanh đen HVU */
+  border: 1px solid #283243;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  user-select: none;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #ffffff;
+}
+
+.mcp--dragging {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.8);
+  opacity: 0.96;
+}
+
+/* Header Panel: Gradient Đỏ Đô Thương Hiệu HVU */
+.mcp__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  padding: 0 8px;
+  background: linear-gradient(180deg, #b71c1c 0%, #7f1d1d 100%);
+  border-bottom: 1px solid #f4d03f; /* Điểm nhấn viền Vàng Kim */
+  border-radius: 3px 3px 0 0;
+  cursor: grab;
+}
+
+.mcp__header:active {
+  cursor: grabbing;
+}
+
+.mcp__title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.3px;
+}
+
+.mcp__close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.8;
+}
+
+.mcp__close:hover {
+  opacity: 1;
+  color: #f4d03f;
+}
+
+.mcp__body {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.mcp__jog-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mcp__jog-label {
+  font-size: 9px;
+  color: #90a4ae;
+  text-transform: uppercase;
+}
+
+/* Thanh Jog Tốc Độ: Gradient Vàng Kim -> Đỏ Đô -> Xanh Dương HVU */
+.mcp__jog-track {
+  position: relative;
+  width: 20px;
+  height: 150px;
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    #f4d03f 0%,
+    #b71c1c 45%,
+    #1976d2 100%
+  );
+  border: 1px solid #0a0d14;
+}
+
+.mcp__jog-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+}
+
+.mcp__jog-handle {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 26px;
+  height: 6px;
+  background: #ffffff;
+  border: 1px solid #283243;
+  border-radius: 3px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.mcp__readouts {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcp__readout {
+  display: flex;
+  flex-direction: column;
+  background: #0a0d14;
+  border: 1px solid #283243;
+  border-radius: 3px;
+  padding: 3px 8px;
+}
+
+.mcp__readout-label {
+  font-size: 9px;
+  color: #90a4ae;
+}
+
+.mcp__readout-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #64b5f6; /* Con số LED hiển thị màu Xanh Dương Sáng */
+  font-family: "Consolas", "SFMono-Regular", monospace;
+}
+
+.mcp__speeds {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9.5px;
+  color: #d0d7de;
+}
+
+.mcp__speed-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.mcp__buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.mcp__btn {
+  appearance: none;
+  border: 1px solid #36465e;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #253144 0%, #17202e 100%);
+  color: #ffffff;
+  font-size: 12px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcp__btn:hover {
+  background: #2c3a50;
+  border-color: #1976d2;
+}
+
+/* Nút Chạy (Go): Tông Xanh Dương HVU */
+.mcp__btn--go {
+  background: linear-gradient(180deg, #1976d2 0%, #0d47a1 100%);
+  color: #ffffff;
+  border-color: #1565c0;
+  font-weight: 600;
+}
+
+.mcp__btn--go:hover {
+  background: #1e88e5;
+}
+
+/* Nút Dừng (Stop): Tông Đỏ Cảnh Báo */
+.mcp__btn--stop {
+  background: linear-gradient(180deg, #e53935 0%, #b71c1c 100%);
+  color: #ffffff;
+  border-color: #c62828;
+  font-weight: 600;
+}
+
+.mcp__btn--stop:hover {
+  background: #ef5350;
+}
+
+/* Tab thu gọn ở mép màn hình dùng để mở lại Panel */
+.mcp-tab {
+  position: fixed;
+  top: 90px;
+  right: 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  appearance: none;
+  border: 1px solid #f4d03f;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(180deg, #b71c1c 0%, #7f1d1d 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 10px 5px;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.mcp-tab:hover {
+  background: #c62828;
+}

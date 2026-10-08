@@ -1,0 +1,77 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0a0d14; /* Nền tối tổng thể xanh đen HVU */
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  background: #0f141d; /* Nền ứng dụng chính */
+  color: #ffffff;
+  font-family: "Segoe UI", "Inter", Arial, sans-serif;
+  overflow: hidden;
+}
+
+.app__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.app__content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app__main {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.app__workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Nút mở lại Dock ở cạnh màn hình (Accent Xanh Dương HVU) */
+.app__dock-reopen {
+  flex: 0 0 16px;
+  appearance: none;
+  border: none;
+  border-right: 2px solid #283243;
+  background: linear-gradient(180deg, #121824 0%, #0a0d14 100%);
+  color: #64b5f6; /* Xanh Dương Sáng */
+  font-size: 10px;
+  cursor: pointer;
+  writing-mode: vertical-rl;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app__dock-reopen:hover {
+  background: #1c2433;
+  color: #ffffff;
+}
+/* Tab Particle DIC: chiếm toàn bộ vùng main, tự cuộn bên trong */
+.app__dic {
+  height: 100%;
+  min-height: 0;
+}

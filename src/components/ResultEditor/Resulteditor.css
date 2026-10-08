@@ -1,0 +1,388 @@
+.result-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 4px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #ffffff;
+}
+
+.result-editor__infobar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: linear-gradient(180deg, #1e2636 0%, #121824 100%);
+  border: 1px solid #283243;
+  border-radius: 2px;
+  font-size: 11px;
+}
+
+.result-editor__infobar-label {
+  color: #90a4ae;
+}
+
+.result-editor__infobar-value {
+  color: #f4d03f; /* Điểm nhấn Vàng Kim HVU */
+  font-weight: 600;
+}
+
+.result-editor__spacer {
+  flex: 1 1 auto;
+}
+
+.result-editor__tool {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  appearance: none;
+  border: 1px solid #36465e;
+  background: #17202e;
+  color: #ffffff;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.result-editor__tool:hover {
+  background: #253144;
+  border-color: #1976d2;
+}
+
+.result-editor__tool:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.result-editor__tool-icon {
+  font-size: 11px;
+  color: #64b5f6; /* Xanh Dương Sáng HVU */
+}
+
+.result-editor__tool-icon--danger {
+  color: #e53935; /* Đỏ Cảnh Báo HVU */
+}
+
+.result-editor__ribbon {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #121824;
+  border: 1px solid #283243;
+  border-radius: 2px;
+  overflow-x: auto;
+}
+
+.result-editor__ribbon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #90a4ae;
+  font-size: 9.5px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.result-editor__ribbon-item:hover {
+  background: #1c2433;
+  color: #ffffff;
+}
+
+.result-editor__ribbon-icon {
+  font-size: 15px;
+  color: #64b5f6; /* Xanh Dương Sáng HVU */
+}
+
+.result-editor__ribbon-label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+/* Tab Ribbon Active: Gradient Đỏ Đô Thương Hiệu HVU & Viền Vàng Kim */
+.result-editor__ribbon-item--active {
+  background: linear-gradient(180deg, #b71c1c 0%, #7f1d1d 100%);
+  border-color: #f4d03f;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.result-editor__ribbon-item--active .result-editor__ribbon-icon {
+  color: #ffffff;
+}
+
+.result-editor__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 2px;
+}
+
+.result-editor__section {
+  flex: 0 0 auto;
+  background: #121824;
+  border: 1px solid #283243;
+  border-radius: 2px;
+  padding: 10px 12px;
+  scroll-margin-top: 6px;
+}
+
+.result-editor__section-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #64b5f6; /* Tiêu đề section màu Xanh Dương Sáng HVU */
+  font-weight: 600;
+  border-bottom: 1px solid #283243;
+  padding-bottom: 6px;
+}
+
+.result-editor__hint {
+  color: #90a4ae;
+  font-size: 11px;
+  margin: 0 0 8px;
+}
+
+.result-editor__field-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.result-editor__field-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10.5px;
+  color: #d0d7de;
+  min-width: 150px;
+}
+
+.result-editor__field-wide {
+  flex-basis: 100%;
+}
+
+.result-editor__field-grid input,
+.result-editor__field-grid textarea,
+.result-editor__field-grid select {
+  background: #0a0d14;
+  border: 1px solid #36465e;
+  color: #ffffff;
+  font-size: 10.5px;
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+
+.result-editor__field-grid input:focus,
+.result-editor__field-grid textarea:focus,
+.result-editor__field-grid select:focus {
+  border-color: #1976d2;
+  outline: none;
+}
+
+.result-editor__readonly {
+  color: #6c7a89 !important;
+  background: #06080d !important;
+  cursor: default;
+}
+
+.result-editor__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: #d0d7de;
+  margin: 6px 0;
+}
+
+.result-editor__checkbox--aligned {
+  min-width: 220px;
+  align-self: flex-end;
+}
+
+.result-editor__mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+}
+
+.result-editor__mini-table th {
+  text-align: left;
+  color: #90a4ae;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-bottom: 1px solid #283243;
+}
+
+.result-editor__mini-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #1c2433;
+}
+
+.result-editor__order-input {
+  width: 48px;
+  background: #0a0d14;
+  border: 1px solid #36465e;
+  color: #ffffff;
+  font-size: 10.5px;
+  padding: 3px 5px;
+  border-radius: 3px;
+}
+
+.result-editor__seg-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.result-editor__search {
+  background: #0a0d14;
+  border: 1px solid #36465e;
+  color: #ffffff;
+  font-size: 10.5px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  min-width: 180px;
+}
+
+.result-editor__param-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+  margin-top: 6px;
+}
+
+.result-editor__param-table th {
+  text-align: left;
+  color: #90a4ae;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-bottom: 1px solid #283243;
+}
+
+.result-editor__param-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid #1c2433;
+  cursor: pointer;
+}
+
+.result-editor__param-table input,
+.result-editor__param-table select {
+  width: 100%;
+  background: #0a0d14;
+  border: 1px solid #36465e;
+  color: #ffffff;
+  font-size: 10.5px;
+  padding: 3px 5px;
+  border-radius: 3px;
+}
+
+.result-editor__param-row--selected {
+  background: #1c2433;
+}
+
+.result-editor__formula-field {
+  gap: 8px;
+}
+
+.result-editor__formula-field input {
+  flex: 1 1 auto;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 12px;
+  background: #0a0d14;
+  border: 1px solid #36465e;
+  color: #64b5f6; /* Công thức hiển thị màu Xanh Dương Sáng HVU */
+  padding: 6px 8px;
+  border-radius: 3px;
+}
+
+.result-editor__error {
+  color: #e53935; /* Màu lỗi Đỏ Cảnh Báo HVU */
+  font-size: 10.5px;
+  margin: -4px 0 8px;
+}
+
+/* ---- Result Type ---- */
+.result-editor__type-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.result-editor__type-label {
+  font-size: 12px;
+  color: #f4d03f; /* Màu nhãn Vàng Kim HVU */
+}
+
+.result-editor__demo-toggle {
+  font-size: 10px;
+  color: #90a4ae;
+}
+
+.result-editor__warning {
+  color: #f4d03f;
+  font-style: italic;
+  font-size: 11px;
+  margin: 0 0 8px;
+}
+
+.result-editor__box:disabled,
+fieldset.result-editor__box:disabled {
+  opacity: 0.55;
+}
+
+.result-editor__box:disabled legend {
+  color: #90a4ae;
+}
+
+.result-editor__toggle-group {
+  display: flex;
+  gap: 4px;
+}
+
+.result-editor__toggle-btn {
+  appearance: none;
+  border: 1px solid #36465e;
+  background: #17202e;
+  color: #ffffff;
+  font-size: 10.5px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.result-editor__toggle-btn--active {
+  background: linear-gradient(180deg, #b71c1c 0%, #7f1d1d 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border-color: #f4d03f;
+}
+
+.result-editor__hint--tight {
+  margin: 6px 0 0;
+}
+
+.result-editor__footer {
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 4px;
+  color: #283243;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}

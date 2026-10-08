@@ -1,0 +1,33 @@
+.tab-nav {
+  display: flex;
+  flex: 0 0 30px;
+  height: 30px;
+  background: #0a0d14; /* Nền tối xanh đen HVU */
+  border-bottom: 1px solid #283243;
+  overflow: hidden;
+}
+
+.tab-nav__item {
+  appearance: none;
+  border: none;
+  border-right: 1px solid #283243;
+  background: transparent;
+  color: #90a4ae;
+  font-size: 11.5px;
+  padding: 0 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab-nav__item:hover {
+  color: #ffffff;
+  background: #1c2433;
+}
+
+/* Tab Active: Gradient Đỏ Đô Thương Hiệu HVU & Viền Vàng Kim */
+.tab-nav__item--active {
+  color: #ffffff;
+  background: linear-gradient(180deg, #b71c1c 0%, #7f1d1d 100%);
+  font-weight: 600;
+  border-bottom: 2px solid #f4d03f; /* Điểm nhấn Vàng Kim */
+}

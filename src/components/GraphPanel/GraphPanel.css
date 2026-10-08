@@ -1,0 +1,81 @@
+.graph-panel {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.graph-panel__header {
+  flex: 0 0 20px !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.graph-panel__body {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: calc(100% - 20px) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.graph-panel__svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.graph-panel__gridline {
+  stroke: #e0e0e0 !important;
+  stroke-width: 1px !important;
+}
+
+.graph-panel__border {
+  fill: none !important;
+  stroke: #111111 !important;
+  stroke-width: 1.5px !important;
+}
+
+.graph-panel__tick {
+  font-family: Arial, sans-serif !important;
+  font-size: 11px !important;
+  fill: #222222 !important;
+}
+
+.graph-panel__tick--y {
+  text-anchor: end !important;
+}
+
+.graph-panel__tick--x {
+  text-anchor: middle !important;
+}
+
+.graph-panel__axis-label {
+  font-family: Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  fill: #000000 !important;
+  text-anchor: middle !important;
+}
+
+.graph-panel__curve {
+  fill: none !important;
+  stroke: #000000 !important;
+  stroke-width: 2.2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.graph-panel__break-point {
+  fill: #d93025 !important;
+  stroke: #000000 !important;
+  stroke-width: 1px !important;
+}

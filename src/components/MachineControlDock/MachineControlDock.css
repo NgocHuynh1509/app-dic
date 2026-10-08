@@ -1,0 +1,390 @@
+.mcd {
+  flex: 0 0 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #14170f 0%, #0a0c08 100%);
+  border-right: 2px solid #2c2f28;
+  padding: 6px 8px 8px;
+  overflow: hidden; /* không còn thanh cuộn */
+  gap: 4px;
+}
+
+.mcd__header {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #8f9a80;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.mcd__header-close {
+  appearance: none;
+  border: 1px solid #2a2d24;
+  background: #171a13;
+  color: #cfd6c4;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.mcd__header-close:hover {
+  background: #232819;
+  color: #e0473a;
+}
+
+.mcd__info {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+  color: #9aa294;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #22261c;
+}
+
+.mcd__info-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+}
+
+.mcd__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a01313;
+  box-shadow: 0 0 3px #d94a4a;
+}
+
+.mcd__live-label {
+  flex: 0 0 auto;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #cfd6c4;
+}
+
+/* Vùng slider: chiếm phần cao còn lại, thanh trượt tự co giãn */
+.mcd__slider-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.mcd__max-speed {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: 8.5px;
+  color: #6b7362;
+  text-align: center;
+}
+
+.mcd__max-speed strong {
+  color: #cfd6c4;
+  font-weight: 600;
+  font-size: 9.5px;
+}
+
+.mcd__fixed-jog {
+  flex: 0 0 auto;
+  width: 100%;
+  text-align: center;
+  font-size: 9px;
+  color: #6b7362;
+  text-transform: uppercase;
+}
+
+.mcd__slider-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 50px;
+  max-height: 200px;
+  width: 30px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to bottom,
+    #ff9b9b 0%,
+    #d05e5e 28%,
+    #ac3131 55%,
+    #8f1616 100%
+  );
+  border: 1px solid #0b0d0c;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
+.mcd__slider-handle {
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: 38%;
+  height: 11px;
+  background: #dfe6d3;
+  border: 1px solid #50554f;
+  border-radius: 2px;
+  box-shadow: 0 1px 0 #fff;
+}
+
+.mcd__readouts {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+
+.mcd__readout {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: #090b08;
+  border: 1px solid #22261c;
+  border-radius: 12px;
+  padding: 3px 4px;
+}
+
+.mcd__readout-icon {
+  font-size: 10px;
+}
+
+.mcd__readout-chevron {
+  color: #9be03a;
+  font-size: 11px;
+}
+
+.mcd__readout-value {
+  color: #b7ff53;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mcd__rate {
+  font-size: 9px;
+  color: #6b7362;
+  text-align: center;
+}
+
+.mcd__turtle {
+  flex: 0 0 auto;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  filter: grayscale(0.1);
+}
+
+.mcd__section-label {
+  flex: 0 0 auto;
+  width: 100%;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #cfd6c4;
+  border-top: 1px solid #22261c;
+  padding-top: 4px;
+}
+
+.mcd__glyphs {
+  flex: 0 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+.mcd__glyph {
+  appearance: none;
+  border: 1px solid #2a2d24;
+  background: #171a13;
+  color: #9aa294;
+  font-size: 10px;
+  height: 20px;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mcd__glyph:hover {
+  background: #232819;
+}
+
+.mcd__glyph--stop {
+  color: #e0473a;
+}
+
+.mcd__speeds {
+  flex: 0 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9.5px;
+  color: #9aa294;
+}
+
+.mcd__speed-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.mcd__speed-row strong {
+  color: #dfe6d3;
+  font-weight: 500;
+}
+
+.mcd__spacer {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+.mcd__return,
+.mcd__up,
+.mcd__down,
+.mcd__play,
+.mcd__stop {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid #2a2d24;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+}
+
+.mcd__return {
+  background: linear-gradient(180deg, #f0a23a 0%, #c9741f 100%);
+  color: #2a1604;
+  border-color: #c9741f;
+}
+
+.mcd__up,
+.mcd__down {
+  background: linear-gradient(180deg, #dfe6d3 0%, #a9b39a 100%);
+  color: #14170f;
+}
+
+.mcd__run-row {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+}
+
+.mcd__play {
+  background: linear-gradient(180deg, #8fd13f 0%, #5c9a1f 100%);
+  color: #0d1206;
+  width: 26px;
+}
+
+.mcd__stop {
+  background: linear-gradient(180deg, #e0654f 0%, #a83224 100%);
+  color: #1a0a06;
+  width: 26px;
+}
+
+.mcd__foot-row {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+}
+
+.mcd__foot-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #2a2d24;
+  background: #171a13;
+  color: #9be03a;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mcd__jog-speed-label {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: #cfd6c4;
+  font-family: "Consolas", monospace;
+}
+
+.mcd__repeat {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #2a2d24;
+  background: linear-gradient(180deg, #dfe6d3 0%, #a9b39a 100%);
+  color: #14170f;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Màn hình thấp (laptop nhỏ): thu nhỏ thêm để vẫn vừa một trang */
+@media (max-height: 800px) {
+  .mcd {
+    gap: 3px;
+    padding: 4px 8px 6px;
+  }
+
+  .mcd__return,
+  .mcd__up,
+  .mcd__down,
+  .mcd__play,
+  .mcd__stop {
+    height: 22px;
+    font-size: 13px;
+  }
+
+  .mcd__glyph {
+    height: 18px;
+  }
+
+  .mcd__turtle {
+    font-size: 14px;
+  }
+
+  .mcd__repeat {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+
+  .mcd__foot-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mcd__slider-track {
+    min-height: 40px;
+  }
+}

@@ -1,0 +1,406 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.h5kt-tab {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  background: #1b1c18;
+  color: #dcdcdc;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 11px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* MACHINE STATUS BAR */
+.h5kt-status-line {
+  flex: 0 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  background: #23261f;
+  border: 1px solid #33372c;
+  font-size: 11px;
+}
+
+.h5kt-status-badge {
+  color: #e5c158;
+  font-weight: bold;
+}
+
+.h5kt-status-spacer {
+  flex: 1;
+}
+
+.h5kt-btn-dropdown {
+  background: linear-gradient(180deg, #3d4234 0%, #20231b 100%);
+  border: 1px solid #4a503f;
+  color: #ddd;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+/* MAIN TOP WORKSPACE LAYOUT - chiếm phần còn lại, đẩy Testing xuống đáy */
+.h5kt-top-content {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* GRAPH PANEL */
+.h5kt-graph-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+.h5kt-graph-content {
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.h5kt-graph-content > * {
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box;
+}
+
+/* RIGHT SIDEBAR */
+.h5kt-right-sidebar {
+  flex: 0 0 310px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+/* COMMON PANEL STYLES */
+.h5kt-panel {
+  background: #141612;
+  border: 1px solid #2d3126;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.h5kt-panel-header {
+  flex: 0 0 20px;
+  background: linear-gradient(180deg, #2f3427 0%, #1a1d15 100%);
+  border-bottom: 1px solid #2d3126;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  font-weight: bold;
+  font-size: 11px;
+  color: #e2e8d8;
+}
+
+.h5kt-panel-actions button {
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  border: none;
+  color: #8a947d;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.h5kt-panel-actions button:hover {
+  color: #fff;
+}
+
+/* MACHINE CONTROLS PANEL */
+.h5kt-controls-panel {
+  flex: 0 0 auto;
+}
+
+.h5kt-controls-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  padding: 4px;
+  background: #181a16;
+  border-top: 1px solid #2a2d24;
+}
+
+/* METALLIC BUTTONS */
+.h5kt-ctrl-btn {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
+  min-height: 38px;
+  background: linear-gradient(180deg, #e6e6e6 0%, #cacaca 45%, #a1a1a1 50%, #d8d8d8 100%);
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.h5kt-ctrl-btn:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #dfdfdf 45%, #b5b5b5 50%, #ececec 100%);
+}
+
+.h5kt-ctrl-btn:active {
+  background: linear-gradient(180deg, #999 0%, #bbb 100%);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.ctrl-icon {
+  width: 100%;
+  height: 100%;
+  max-width: 26px;
+  max-height: 26px;
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.ctrl-stop-x {
+  font-family: "Arial Black", "Impact", sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #cc0000;
+  text-shadow: 0px 1px 0px #fff, 0px -1px 0px #800000;
+  line-height: 1;
+}
+
+/* LIVE DATA PANEL */
+.h5kt-live-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.h5kt-live-data {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px;
+  background: #11130f;
+  overflow-y: auto;
+}
+
+.h5kt-live-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #1a1d17;
+  border: 1px solid #292e22;
+  padding: 2px 4px;
+  height: 24px;
+  box-sizing: border-box;
+}
+
+.h5kt-live-label {
+  width: 85px;
+  font-size: 10px;
+  color: #a1aa95;
+  white-space: nowrap;
+}
+
+.h5kt-live-row input {
+  flex: 1;
+  min-width: 0;
+  height: 18px;
+  background: #000;
+  border: 1px solid #33392a;
+  color: #79f82e;
+  font-family: "Consolas", monospace;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: right;
+  padding: 0 4px;
+}
+
+.h5kt-live-unit {
+  width: 35px;
+  font-size: 9px;
+  color: #6a7360;
+}
+
+.h5kt-live-btn {
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
+  padding: 0;
+  background: #272d20;
+  border: 1px solid #3d4533;
+  color: #aaa;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+/* SIGMA / EPSILON PANEL — nhận hết phần không gian còn lại của sidebar
+   (flex: 1 1 auto, giống Live Data) nhưng KHÔNG dùng .h5kt-live-row (có
+   height cố định 24px) mà dùng các hàng flex:1 riêng để 2 giá trị σ và ε
+   giãn to, lấp khít chiều cao còn trống của panel. */
+.h5kt-sigma-eps-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.h5kt-sigma-eps-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  background: #11130f;
+  min-height: 0;
+}
+
+.h5kt-sigma-eps-row {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1d17;
+  border: 1px solid #292e22;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.h5kt-sigma-eps-label {
+  flex: 0 0 auto;
+  font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  font-weight: 700;
+  font-style: italic;
+  color: #72b41c;
+}
+
+.h5kt-sigma-eps-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-family: "Consolas", monospace;
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  font-weight: 700;
+  color: #79f82e;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.h5kt-sigma-eps-unit {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  color: #6a7360;
+}
+
+/* BOTTOM RESULTS AREA - đẩy xuống cuối cùng.
+   Chiều cao cố định = toolbar ngoài (h5kt-results__toolbar) + toolbar trong của
+   SpecimenTable (specimen-table__toolbar, 27px) + 1 dòng header + 4 dòng dữ liệu.
+   Nếu SpecimenTable đổi chiều cao dòng/toolbar, chỉnh lại các biến bên dưới. */
+.h5kt-results {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  --outer-toolbar-h: 28px;
+  --inner-toolbar-h: 27px;
+  --row-h: 26px;
+  height: calc(var(--outer-toolbar-h) + var(--inner-toolbar-h) + (var(--row-h) * 5));
+}
+
+/* RESULTS TOOLBAR DÀNH CHO H5KTTAB.CSS */
+.h5kt-results__toolbar {
+  flex: 0 0 28px !important;
+  background: linear-gradient(180deg, #4d5243 0%, #292d23 100%) !important;
+  border-bottom: 1px solid #383e2e !important;
+  padding: 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.h5kt-results__tools {
+  display: flex !important;
+  gap: 4px !important;
+  align-items: center !important;
+}
+
+.h5kt-results__tools button {
+  background: linear-gradient(180deg, #3d4334 0%, #20241b 100%) !important;
+  border: 1px solid #505744 !important;
+  color: #e5ecd8 !important;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  border-radius: 2px !important;
+  cursor: pointer !important;
+}
+
+.h5kt-results__tools button:hover {
+  background: #4a523f !important;
+}
+
+/* BẢNG KẾT QUẢ - CHỈ HIỂN THỊ 4 DÒNG, PHẦN CÒN LẠI CUỘN */
+.h5kt-results__table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.h5kt-results__table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.h5kt-results__table-wrapper thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #23261f;
+}
+
+/* Thanh cuộn theo phong cách tối của giao diện */
+.h5kt-results__table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.h5kt-results__table-wrapper::-webkit-scrollbar-track {
+  background: #181a16;
+}
+
+.h5kt-results__table-wrapper::-webkit-scrollbar-thumb {
+  background: #4a503f;
+  border-radius: 4px;
+}
+
+.h5kt-results__table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #5c6350;
+}
+
+/* Firefox */
+.h5kt-results__table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #4a503f #181a16;
+}

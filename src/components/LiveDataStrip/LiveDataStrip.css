@@ -1,0 +1,40 @@
+.live-data-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  flex: 0 0 46px;
+  padding: 4px 0;
+}
+
+.live-data-strip__cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #121824; /* Nền panel xanh xám tối */
+  border: 1px solid #283243; /* Viền khung công nghiệp */
+  border-radius: 4px; /* Bo góc nhẹ chuẩn phần mềm kỹ thuật */
+  padding: 3px 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.live-data-strip__label {
+  font-size: 9.5px;
+  color: #90a4ae; /* Màu nhãn ghi xám dễ đọc */
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.live-data-strip__value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #64b5f6; /* Xanh Dương sáng highlight chỉ số Live Data */
+  font-family: "Consolas", "Courier New", monospace; /* Font monospace hiển thị số liệu */
+}
+
+.live-data-strip__unit {
+  font-size: 9px;
+  font-weight: 400;
+  color: #8294aa; /* Màu đơn vị xám sáng */
+  margin-left: 2px;
+}

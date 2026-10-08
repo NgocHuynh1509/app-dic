@@ -1,0 +1,850 @@
+/* =========================================================
+   HORIZON - RECALL TAB
+   Legacy Windows / Tinius Olsen style
+========================================================= */
+
+.recall-tab {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  background: #151914;
+
+  color: #111;
+
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size: 10px;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   COMMON SECTION
+========================================================= */
+
+.recall-section {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+
+  border: 1px solid #252923;
+
+  background: #d1d1d1;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SECTION TITLE
+========================================================= */
+
+.recall-section__title {
+  flex: 0 0 22px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 8px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #58635d 0%,
+      #303a34 48%,
+      #1d2521 100%
+    );
+
+  color: #f2f2f2;
+
+  border-bottom: 1px solid #111;
+
+  font-size: 10px;
+
+  font-weight: bold;
+
+  letter-spacing: 0.1px;
+
+  text-shadow:
+    1px 1px #111;
+}
+
+
+/* =========================================================
+   SEARCH OPTIONS
+========================================================= */
+
+.recall-search-section {
+  flex: 0 0 106px;
+}
+
+.recall-search-content {
+  position: relative;
+
+  flex: 1;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(300px, 1.2fr)
+    minmax(180px, 0.8fr)
+    minmax(140px, 0.55fr)
+    minmax(250px, 1fr);
+
+  gap: 0;
+
+  padding: 5px 7px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #f0f0f0,
+      #d2d2d2
+    );
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   SEARCH COLUMNS
+========================================================= */
+
+.recall-search-column {
+  min-width: 0;
+
+  padding-right: 9px;
+
+  border-right: 1px solid #8b8b8b;
+}
+
+.recall-search-column--middle {
+  padding-left: 8px;
+}
+
+.recall-search-column--right {
+  padding-left: 8px;
+}
+
+
+/* =========================================================
+   SEARCH ROW
+========================================================= */
+
+.recall-search-row {
+  min-height: 28px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  white-space: nowrap;
+}
+
+.recall-search-row label {
+  width: 50px;
+
+  flex-shrink: 0;
+
+  color: #222;
+
+  font-weight: bold;
+}
+
+.recall-search-row input,
+.recall-search-row select {
+  height: 22px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #777;
+
+  border-top-color: #555;
+
+  border-left-color: #555;
+
+  background: #fff;
+
+  color: #222;
+
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size: 10px;
+
+  padding: 2px 5px;
+}
+
+.recall-search-row input {
+  width: 110px;
+}
+
+.recall-search-row select {
+  width: 92px;
+}
+
+.recall-search-input {
+  width: 125px !important;
+}
+
+.recall-search-hint {
+  color: #333;
+
+  font-size: 9px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   TODAY BUTTON
+========================================================= */
+
+.recall-today-button {
+  height: 24px;
+
+  min-width: 66px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #717c84,
+      #39434a
+    );
+
+  color: white;
+
+  border: 1px solid #303030;
+
+  box-shadow:
+    inset 1px 1px rgba(255,255,255,.25);
+
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+.recall-today-button:hover {
+  background:
+    linear-gradient(
+      to bottom,
+      #85919a,
+      #46525a
+    );
+}
+
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
+.recall-check {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  color: #222;
+
+  font-size: 9.5px;
+
+  white-space: nowrap;
+}
+
+.recall-check input {
+  width: 12px;
+  height: 12px;
+
+  margin: 0;
+}
+
+.recall-no-data {
+  display: block;
+
+  margin-left: 50px;
+
+  margin-top: -1px;
+
+  color: #444;
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   RIGHT OPTIONS
+========================================================= */
+
+.recall-search-options {
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding-left: 10px;
+}
+
+.recall-search-actions {
+  position: absolute;
+
+  right: 7px;
+  top: 5px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.recall-green-button,
+.recall-run-button,
+.recall-clear-button,
+.recall-icon-button {
+  height: 23px;
+
+  border: 1px solid #686868;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #eeeeee,
+      #c5c5c5
+    );
+
+  color: #222;
+
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size: 9px;
+
+  cursor: pointer;
+}
+
+.recall-green-button {
+  min-width: 62px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #b8d95d,
+      #779e22
+    );
+
+  color: #162006;
+
+  font-weight: bold;
+}
+
+.recall-run-button {
+  min-width: 70px;
+}
+
+.recall-clear-button {
+  min-width: 55px;
+}
+
+.recall-icon-button {
+  width: 25px;
+}
+
+.recall-green-button:hover,
+.recall-run-button:hover,
+.recall-clear-button:hover {
+  filter: brightness(1.08);
+}
+
+
+/* =========================================================
+   SEARCH RESULTS
+========================================================= */
+
+.recall-results-section {
+  flex: 1 1 auto;
+
+  min-height: 0;
+}
+
+
+/* =========================================================
+   RESULTS TOOLBAR
+========================================================= */
+
+.recall-results-toolbar {
+  flex: 0 0 29px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  padding: 3px 5px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #53615b,
+      #303a35
+    );
+
+  border-bottom: 1px solid #1a201d;
+
+  color: #fff;
+
+  box-sizing: border-box;
+}
+
+.recall-result-count {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 0 6px;
+
+  height: 21px;
+
+  color: #dce4dc;
+
+  white-space: nowrap;
+}
+
+.recall-result-count span {
+  color: #b8dc54;
+
+  font-weight: bold;
+}
+
+.recall-toolbar-button {
+  height: 21px;
+
+  padding: 2px 7px;
+
+  border: 1px solid #58635d;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #68746d,
+      #39443e
+    );
+
+  color: #f0f0f0;
+
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size: 9px;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+}
+
+.recall-toolbar-button:hover {
+  background:
+    linear-gradient(
+      to bottom,
+      #7b8880,
+      #46534c
+    );
+}
+
+.recall-toolbar-button--danger {
+  color: #ff9c8e;
+}
+
+.recall-toolbar-spacer {
+  flex: 1;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.recall-table-container {
+  flex: 1;
+
+  min-height: 0;
+
+  overflow: auto;
+
+  background: #eeeeee;
+
+  border-top: 1px solid #858585;
+
+  scrollbar-width: thin;
+}
+
+
+/* Scrollbar */
+
+.recall-table-container::-webkit-scrollbar {
+  width: 13px;
+  height: 13px;
+}
+
+.recall-table-container::-webkit-scrollbar-track {
+  background: #c5c5c5;
+}
+
+.recall-table-container::-webkit-scrollbar-thumb {
+  background:
+    linear-gradient(
+      to right,
+      #969696,
+      #c3c3c3
+    );
+
+  border: 1px solid #777;
+}
+
+
+/* TABLE */
+
+.recall-table {
+  width: 100%;
+
+  min-width: 900px;
+
+  border-collapse: collapse;
+
+  table-layout: fixed;
+
+  font-family:
+    Tahoma,
+    Arial,
+    sans-serif;
+}
+
+
+/* COLUMN WIDTHS */
+
+.recall-table th:nth-child(1) {
+  width: 75px;
+}
+
+.recall-table th:nth-child(2) {
+  width: 24%;
+}
+
+.recall-table th:nth-child(3) {
+  width: 24%;
+}
+
+.recall-table th:nth-child(4) {
+  width: 21%;
+}
+
+.recall-table th:nth-child(5) {
+  width: 75px;
+}
+
+.recall-table th:nth-child(6) {
+  width: 100px;
+}
+
+.recall-table th:nth-child(7) {
+  width: 100px;
+}
+
+
+/* HEADER */
+
+.recall-table thead th {
+  position: sticky;
+
+  top: 0;
+
+  z-index: 5;
+
+  height: 23px;
+
+  padding: 3px 7px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #727c75,
+      #4a554e
+    );
+
+  color: #f2f2f2;
+
+  border-right: 1px solid #303630;
+
+  border-bottom: 1px solid #202520;
+
+  text-align: left;
+
+  font-size: 9.5px;
+
+  font-weight: bold;
+
+  white-space: nowrap;
+
+  box-sizing: border-box;
+}
+
+
+/* BODY */
+
+.recall-table tbody tr {
+  height: 23px;
+
+  cursor: pointer;
+}
+
+.recall-table tbody tr:nth-child(odd) {
+  background: #e9e9e9;
+}
+
+.recall-table tbody tr:nth-child(even) {
+  background: #d5d9d5;
+}
+
+.recall-table tbody tr:hover {
+  background: #cbd8e2;
+}
+
+.recall-table td {
+  height: 23px;
+
+  padding: 2px 7px;
+
+  border-right: 1px solid #c2c2c2;
+
+  border-bottom: 1px solid #c4c4c4;
+
+  color: #292929;
+
+  font-size: 9.5px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  box-sizing: border-box;
+}
+
+.recall-table__center {
+  text-align: center;
+}
+
+
+/* SELECTED */
+
+.recall-table__row--selected {
+  background:
+    linear-gradient(
+      to bottom,
+      #d7e78c,
+      #aec94d
+    ) !important;
+}
+
+.recall-table__row--selected td {
+  color: #172006;
+
+  font-weight: bold;
+
+  border-bottom-color: #9ba943;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.recall-status {
+  font-weight: bold;
+}
+
+.recall-status--finished {
+  color: #3f6515;
+}
+
+.recall-status--running {
+  color: #a46a00;
+}
+
+.recall-status--failed {
+  color: #a30000;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.recall-empty {
+  height: 100px;
+
+  text-align: center !important;
+
+  color: #777 !important;
+}
+
+
+/* =========================================================
+   VIEW SECTION
+========================================================= */
+
+.recall-view-section {
+  flex: 0 0 72px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  background: #10130f;
+
+  border-top: 2px solid #4e594f;
+
+  box-sizing: border-box;
+}
+
+.recall-view-title {
+  height: 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 8px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      #56615b,
+      #303a34
+    );
+
+  color: white;
+
+  font-size: 10px;
+
+  font-weight: bold;
+
+  border-bottom: 1px solid #1a201c;
+}
+
+.recall-view-content {
+  flex: 1;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 7px 9px;
+
+  background: #d1d1d1;
+}
+
+.recall-view-content > label:first-child {
+  font-weight: bold;
+
+  white-space: nowrap;
+}
+
+.recall-view-content select {
+  width: 180px;
+
+  height: 23px;
+
+  border: 1px solid #777;
+
+  background: white;
+
+  font-family: Tahoma, Arial, sans-serif;
+
+  font-size: 10px;
+}
+
+.recall-dropdown-button {
+  width: 22px;
+
+  height: 23px;
+
+  margin-left: -5px;
+
+  border: 1px solid #777;
+
+  background: #d7d7d7;
+
+  cursor: pointer;
+}
+
+.recall-view-check {
+  margin-left: 5px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+  .recall-search-content {
+    grid-template-columns:
+      1.2fr
+      0.8fr
+      0.6fr;
+  }
+
+  .recall-search-options {
+    display: none;
+  }
+
+  .recall-search-actions {
+    right: 5px;
+  }
+}
