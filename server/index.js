@@ -8,17 +8,42 @@ import { WebSocketServer, WebSocket } from "ws";
 
 import { SERVER_CONFIG } from "./config.js";
 import { SessionManager } from "./session.js";
+import { requireLocalToken, verifyWsClient, isLocked } from "./local-auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cfg = SERVER_CONFIG;
 const session = new SessionManager(cfg);
 
+// Chỉ nhận request từ giao diện của app (Vite dev, file:// -> origin "null", chính server này).
+// Origin khác (ví dụ VITE_DIC_SERVER chạy máy khác) thêm qua DIC_EXTRA_ORIGINS="http://a:5173,http://b:5173".
+const ALLOWED_ORIGINS = new Set([
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  `http://localhost:${cfg.port}`,
+  `http://127.0.0.1:${cfg.port}`,
+  ...(process.env.DIC_EXTRA_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+]);
+
 const app = express();
-app.use(cors()); // dev-friendly; siết lại khi triển khai thật
+app.use(
+  cors({
+    origin: (origin, cb) => cb(null, !origin || origin === "null" || ALLOWED_ORIGINS.has(origin)),
+  })
+);
 app.use(express.json());
 
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server, path: "/ws" });
+// verifyClient: từ chối kết nối WebSocket nếu thiếu / sai token (?token=...)
+const wss = new WebSocketServer({
+  server,
+  path: "/ws",
+  verifyClient: ({ req }) => verifyWsClient(req),
+});
+
+// Khi app bị khóa từ xa (token bị thu hồi), ngắt mọi kết nối WebSocket đang mở.
+setInterval(() => {
+  if (isLocked()) for (const ws of wss.clients) ws.terminate();
+}, 3000);
 
 // ------------------------------------------------------------- broadcast --
 function broadcast(message) {
@@ -34,6 +59,9 @@ setInterval(broadcastSensors, cfg.sensorBroadcastMs);
 
 // ------------------------------------------------------------------ REST --
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+
+// Mọi route /api còn lại yêu cầu header x-dic-token (hoặc ?token=) hợp lệ.
+app.use("/api", requireLocalToken);
 
 app.get("/api/session", (_req, res) => res.json(session.snapshot()));
 
@@ -120,7 +148,8 @@ const onListenError = (err) => {
 server.on("error", onListenError);
 wss.on("error", onListenError);
 
-server.listen(cfg.port, () => console.log(`Realtime Particle DIC server: http://localhost:${cfg.port}`));
+// Chỉ lắng nghe trên loopback: máy khác trong mạng không truy cập được.
+server.listen(cfg.port, "127.0.0.1", () => console.log(`Realtime Particle DIC server: http://localhost:${cfg.port}`));
 
 const shutdown = () => {
   session.stop();

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <title>Đăng nhập</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 32px 28px; background: #f4f6f8; color: #1f2933; }
+    h1 { font-size: 20px; margin: 0 0 20px; }
+    label { display: block; font-size: 13px; margin: 14px 0 4px; }
+    input { width: 100%; padding: 9px 10px; border: 1px solid #c4ccd4; border-radius: 6px; font-size: 14px; }
+    button { width: 100%; margin-top: 18px; padding: 10px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; font-size: 14px; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: default; }
+    button.secondary { background: #e5e9ee; color: #1f2933; margin-top: 8px; }
+    #msg { margin-top: 14px; font-size: 13px; color: #b42318; min-height: 36px; }
+  </style>
+</head>
+<body>
+  <h1>Đăng nhập phần mềm</h1>
+  <label for="email">Email</label>
+  <input id="email" type="email" autocomplete="username" />
+  <label for="password">Mật khẩu</label>
+  <input id="password" type="password" autocomplete="current-password" />
+  <label for="key">License key</label>
+  <input id="key" type="text" placeholder="XXXXX-XXXXX-XXXXX-XXXX" />
+  <button id="login">Đăng nhập</button>
+  <button id="retry" class="secondary">Thử lại (khi mất mạng)</button>
+  <div id="msg"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const msg = $('msg');
+    window.licenseApi.onReason((m) => { msg.textContent = m; });
+
+    $('login').addEventListener('click', async () => {
+      $('login').disabled = true;
+      msg.textContent = 'Đang kiểm tra...';
+      const res = await window.licenseApi.login({
+        email: $('email').value.trim(),
+        password: $('password').value,
+        licenseKey: $('key').value.trim(),
+      });
+      if (!res.ok) msg.textContent = res.message;
+      $('login').disabled = false;
+    });
+
+    $('retry').addEventListener('click', async () => {
+      msg.textContent = 'Đang kết nối...';
+      await window.licenseApi.retry();
+    });
+  </script>
+</body>
+</html>

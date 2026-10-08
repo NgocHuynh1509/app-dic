@@ -1,7 +1,7 @@
 {
   "name": "my-react-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "electron/main.cjs",
   "description": "My React desktop app",
@@ -11,10 +11,10 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=1 electron .\"",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env LICENSE_SERVER=http://localhost:9000 ELECTRON_DEV=1 electron .\"",
     "electron:build": "npm run build && electron-builder --win",
-    "dic:server": "node server/index.js",
-    "dic:dev": "concurrently -k -n server,client \"node server/index.js\" \"vite\"",
+    "dic:server": "cross-env DIC_AUTH_DISABLED=1 node server/index.js",
+    "dic:dev": "concurrently -k -n server,client \"cross-env DIC_AUTH_DISABLED=1 node server/index.js\" \"vite\"",
     "dic:selftest": "node scripts/selftest-dic.mjs"
   },
   "dependencies": {
@@ -44,6 +44,7 @@
   "build": {
     "appId": "com.ngochuynh.myreactapp",
     "productName": "MyReactApp",
+    "asar": true,
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -51,6 +52,13 @@
     ],
     "directories": {
       "output": "release"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
     },
     "win": {
       "target": "nsis",
