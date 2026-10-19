@@ -3,9 +3,38 @@ const path = require('path')
 const crypto = require('crypto')
 const { pathToFileURL } = require('url')
 const { startLicenseGate } = require('./license-gate.cjs')
+const { StrainSerial } = require('./strainSerial.cjs')
 
 let mainWindow = null
 let serverStarted = false
+
+// ---------- Strain meter (ESP32 + HX711) ----------
+const strain = new StrainSerial()
+
+// Gửi sự kiện tới cửa sổ chính hiện tại (nếu còn)
+const pushStrain = (type) => (payload) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('strain:event', { type, payload })
+  }
+}
+strain.on('status', pushStrain('status'))
+strain.on('hx', pushStrain('hx'))
+strain.on('data', pushStrain('data'))
+strain.on('log', pushStrain('log'))
+
+// Chỉ nhận lệnh từ cửa sổ chính
+const fromMain = (e) => mainWindow && e.sender === mainWindow.webContents
+
+ipcMain.handle('strain:connect', (e) => {
+  if (!fromMain(e)) return false
+  strain.start()
+  return true
+})
+ipcMain.handle('strain:disconnect', async (e) => {
+  if (!fromMain(e)) return
+  await strain.stop()
+})
+ipcMain.handle('strain:send', (e, cmd) => (fromMain(e) ? strain.send(cmd) : false))
 
 // Chạy server Node (Express + WebSocket, cổng 8000) ngay trong tiến trình Electron.
 // Chỉ khởi động SAU KHI license hợp lệ. Tắt app thì server tắt theo;
@@ -46,6 +75,7 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null
+    strain.stop() // đóng cổng COM khi cửa sổ đóng
   })
 
   if (process.env.ELECTRON_DEV) {
@@ -72,6 +102,7 @@ async function createMainWindow() {
 // Được license gate gọi khi bị khóa từ xa: thu hồi token nên server DIC từ chối mọi request
 function closeMainWindows() {
   process.env.DIC_LOCAL_TOKEN = ''
+  strain.stop()
   if (mainWindow) {
     mainWindow.destroy()
     mainWindow = null
@@ -94,6 +125,10 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     startLicenseGate({ createMainWindow, closeMainWindows })
+  })
+
+  app.on('before-quit', () => {
+    strain.stop()
   })
 
   app.on('window-all-closed', () => {

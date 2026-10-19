@@ -1,0 +1,37 @@
+.strain-table-wrap {
+  height: 100%;
+  overflow: auto;
+  background: #12161f;
+}
+
+.strain-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: #e8e8e8;
+}
+
+.strain-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #1a1f2b;
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 2px solid #2b7de9;
+  white-space: nowrap;
+}
+
+.strain-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #232a38;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.strain-table-empty {
+
+  text-align: center;
+  color: #8a93a6;
+  padding: 24px 10px !important;
+}

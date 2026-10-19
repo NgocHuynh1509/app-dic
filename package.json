@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env LICENSE_SERVER=http://localhost:9000 ELECTRON_DEV=1 electron .\"",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env LICENSE_SERVER=https://license-server-production-f8a1.up.railway.app ELECTRON_DEV=1 electron .\"",
     "electron:build": "npm run build && electron-builder --win",
     "dic:server": "cross-env DIC_AUTH_DISABLED=1 node server/index.js",
     "dic:dev": "concurrently -k -n server,client \"cross-env DIC_AUTH_DISABLED=1 node server/index.js\" \"vite\"",
@@ -25,6 +25,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "recharts": "^2.15.0",
+    "serialport": "^13.0.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
@@ -67,6 +68,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    }
+    },
+    "asarUnpack": ["node_modules/@serialport/**", "node_modules/serialport/**"]
   }
 }

@@ -4,7 +4,7 @@ const os = require('node:os');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const SERVER = process.env.LICENSE_SERVER || 'https://license.example.com'; // TODO: đổi sang URL server thật
+const SERVER = process.env.LICENSE_SERVER || 'https://license-server-production-f8a1.up.railway.app'; // TODO: đổi sang URL server thật
 const PUBLIC_KEY = fs.readFileSync(path.join(__dirname, 'public.pem'), 'utf8');
 
 // Các mã lỗi khiến phiên bị xóa, bắt đăng nhập lại
