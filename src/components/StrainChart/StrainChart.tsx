@@ -7,12 +7,13 @@ interface Props {
   tick: number; // đổi giá trị => vẽ lại
   live: boolean;
   windowSec?: number;
+  flipY?: boolean; // true: giá trị lớn nằm dưới, nhỏ nằm trên
 }
 
 const RAW_COLOR = "#f0b429";
 const FILTERED_COLOR = "#35b7ff";
 
-export default function StrainChart({ seriesRef, tick, live, windowSec = 30 }: Props) {
+export default function StrainChart({ seriesRef, tick, live, windowSec = 30, flipY = false }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -53,26 +54,31 @@ export default function StrainChart({ seriesRef, tick, live, windowSec = 30 }: P
 
     const data = seriesRef.current;
 
-    // trục
+    // Trục X: bắt đầu từ 0 (lúc START), trượt khi quá windowSec
     let xMin = 0, xMax = windowSec;
-    let yMin = -1, yMax = 1;
+    // Trục Y: luôn chứa mốc 0; nếu dữ liệu dương thì 0 nằm ở đáy
+    let yMin = 0, yMax = 1;
     if (data.length > 0) {
       const last = data[data.length - 1].t;
       xMax = Math.max(last, 1);
       xMin = Math.max(0, xMax - windowSec);
-      let lo = Infinity, hi = -Infinity;
+
+      let lo = 0, hi = 0;
       for (const s of data) {
         lo = Math.min(lo, s.delta, s.filtered);
         hi = Math.max(hi, s.delta, s.filtered);
       }
-      if (lo === hi) { lo -= 1; hi += 1; }
+      if (hi - lo < 1) hi = lo + 1;
       const pad = (hi - lo) * 0.08;
-      yMin = lo - pad;
       yMax = hi + pad;
+      yMin = lo < 0 ? lo - pad : 0;
     }
 
     const px = (x: number) => L + ((x - xMin) / (xMax - xMin)) * pw;
-    const py = (y: number) => T + ph - ((y - yMin) / (yMax - yMin)) * ph;
+    const py = (y: number) => {
+      const r = (y - yMin) / (yMax - yMin);
+      return flipY ? T + r * ph : T + ph - r * ph;
+    };
 
     // lưới + nhãn
     ctx.strokeStyle = "#ddd";
@@ -99,7 +105,21 @@ export default function StrainChart({ seriesRef, tick, live, windowSec = 30 }: P
 
     // khung
     ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
     ctx.strokeRect(L, T, pw, ph);
+
+    // đường mốc 0 (vị trí kẹp mẫu lúc START)
+    const y0 = py(0);
+    ctx.strokeStyle = "#d64545";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(L, y0); ctx.lineTo(L + pw, y0); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#d64545";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = flipY ? "top" : "bottom";
+    ctx.fillText("mốc 0 (START)", L + pw - 6, flipY ? y0 + 4 : y0 - 4);
 
     // nhãn trục
     ctx.fillStyle = "#000";
@@ -110,7 +130,7 @@ export default function StrainChart({ seriesRef, tick, live, windowSec = 30 }: P
     ctx.save();
     ctx.translate(14, T + ph / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText("Δ HX711 (count)", 0, 0);
+    ctx.fillText(flipY ? "Biến thiên Δ (count) ↓" : "Biến thiên Δ (count)", 0, 0);
     ctx.restore();
 
     // đường dữ liệu
@@ -145,7 +165,7 @@ export default function StrainChart({ seriesRef, tick, live, windowSec = 30 }: P
     ctx.fillStyle = "#222"; ctx.fillText("Filtered", L + 98, T + 10);
   };
 
-  // vẽ lại mỗi lần render (tick đổi)
+  // vẽ lại mỗi lần render (tick hoặc flipY đổi)
   useEffect(() => { draw(); });
   void tick;
 

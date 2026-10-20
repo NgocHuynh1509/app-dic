@@ -40,14 +40,15 @@ function clearSession() {
   try { fs.unlinkSync(sessionFile()); } catch { /* ignore */ }
 }
 
-// Kiểm tra chữ ký + hạn + đúng máy
-function verifyToken(token) {
+// Kiểm tra chữ ký + đúng máy. offline=true: bỏ qua hạn 5 phút của token (dùng hạn license `lexp` thay thế)
+function verifyToken(token, { offline = false } = {}) {
   try {
     const [body, sig] = String(token).split('.');
     const ok = crypto.verify(null, Buffer.from(body), PUBLIC_KEY, Buffer.from(sig, 'base64url'));
     if (!ok) return null;
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
-    if (payload.exp < Date.now() || payload.mid !== machineId()) return null;
+    if (payload.mid !== machineId()) return null;
+    if (!offline && payload.exp < Date.now()) return null;
     return payload;
   } catch {
     return null;
@@ -69,6 +70,7 @@ async function post(endpoint, body) {
   }
 }
 
+// Đăng nhập: cần mạng. Lưu session để lần sau mở app không phải đăng nhập lại.
 async function login({ email, password, licenseKey }) {
   const { status, data } = await post('/api/login', {
     email, password, licenseKey, machineId: machineId(), appVersion: app.getVersion(),
@@ -80,7 +82,7 @@ async function login({ email, password, licenseKey }) {
   return { ok: false, reason: data.code || 'UNKNOWN', downloadUrl: data.downloadUrl };
 }
 
-// Gọi khi khởi động và theo định kỳ. Bắt buộc có mạng.
+// Gọi MỘT LẦN lúc mở app (không gọi định kỳ).
 async function validate() {
   const s = loadSession();
   if (!s) return { ok: false, reason: 'LOGIN_REQUIRED' };
@@ -89,23 +91,25 @@ async function validate() {
     sessionId: s.sessionId, machineId: machineId(), appVersion: app.getVersion(),
   });
 
+  // Online: server xác nhận còn hợp lệ
   if (status === 200 && verifyToken(data.token)) {
     saveSession({ ...s, token: data.token });
     return { ok: true };
   }
+
+  // Offline: dựa vào hạn license (lexp) nằm trong token đã ký
+  if (status === 0) {
+    const p = verifyToken(s.token, { offline: true });
+    if (p && 'lexp' in p) {
+      if (p.lexp === null || p.lexp > Date.now()) return { ok: true, offline: true };
+      clearSession();
+      return { ok: false, reason: 'EXPIRED' };
+    }
+    return { ok: false, reason: 'NO_NETWORK' }; // session cũ không có lexp -> cần mạng để đăng nhập lại
+  }
+
   if (HARD_FAIL.has(data.code)) clearSession();
   return { ok: false, reason: data.code || 'UNKNOWN', downloadUrl: data.downloadUrl };
 }
 
-// Dùng trong lúc app đang chạy: mất mạng ngắn vẫn cho chạy tới khi token cũ hết hạn
-async function heartbeat() {
-  const res = await validate();
-  if (res.ok) return res;
-  if (res.reason === 'NO_NETWORK') {
-    const s = loadSession();
-    if (s && verifyToken(s.token)) return { ok: true, offline: true };
-  }
-  return res;
-}
-
-module.exports = { login, validate, heartbeat, clearSession };
+module.exports = { login, validate, clearSession };

@@ -21,7 +21,8 @@ const dis = (d: boolean): CSSProperties | undefined =>
 
 export default function H5kTTab(_props: Props) {
   const [factorText, setFactorText] = useState("0");
-  const [invert, setInvert] = useState(true);
+  const [invert, setInvert] = useState(true); // dãn mẫu => giá trị tăng từ mốc 0
+  const [flipY, setFlipY] = useState(false); // lật chiều trục Y của đồ thị
 
   const parsed = parseFloat(factorText.replace(",", "."));
   const factor = Number.isFinite(parsed) ? parsed : 0;
@@ -30,7 +31,6 @@ export default function H5kTTab(_props: Props) {
     available, status, connected, hxReady, recording, tick, latest, stats,
     seriesRef, rowsRef, zero, start, stop, clear, exportCsv,
   } = useStrainSerial({ factor, invert });
-
 
   const statusText = !available
     ? "(Chỉ hỗ trợ bản Electron)"
@@ -45,10 +45,10 @@ export default function H5kTTab(_props: Props) {
             : "(Đang tìm ESP32...)";
 
   const rawText = latest ? String(latest.raw) : dash;
-  const deltaText = latest ? String(latest.delta) : dash;
+  const deltaText = latest ? latest.delta.toFixed(1) : dash;
   const filteredText = latest ? latest.filtered.toFixed(1) : dash;
-  const minText = stats.minDelta === null ? dash : String(stats.minDelta);
-  const maxText = stats.maxDelta === null ? dash : String(stats.maxDelta);
+  const minText = stats.minDelta === null ? dash : stats.minDelta.toFixed(1);
+  const maxText = stats.maxDelta === null ? dash : stats.maxDelta.toFixed(1);
   const timeText = latest ? latest.t.toFixed(2) : "0.00";
   const strainText = latest && latest.strain !== null ? latest.strain.toFixed(3) : dash;
 
@@ -63,7 +63,6 @@ export default function H5kTTab(_props: Props) {
         <button className="h5kt-btn-dropdown">Layouts ▾</button>
       </div>
 
-
       {/* TOP WORKSPACE: GRAPH & SIDEBAR */}
       <div className="h5kt-top-content">
         {/* GRAPH PANEL */}
@@ -76,7 +75,7 @@ export default function H5kTTab(_props: Props) {
             </div>
           </div>
           <div className="h5kt-graph-content">
-            <StrainChart seriesRef={seriesRef} tick={tick} live={recording} />
+            <StrainChart seriesRef={seriesRef} tick={tick} live={recording} flipY={flipY} />
           </div>
         </section>
 
@@ -96,7 +95,6 @@ export default function H5kTTab(_props: Props) {
               <button className="h5kt-ctrl-btn ctrl-grip" title="Grip / Setup">
                 <svg viewBox="0 0 36 36" className="ctrl-icon">
                   <rect x="6" y="6" width="24" height="24" rx="2" fill="#555" stroke="#888" strokeWidth="1" />
-
                   <path d="M10 18 h16 M18 10 v16" stroke="#ff8c00" strokeWidth="3" />
                   <circle cx="18" cy="18" r="4" fill="#ff4500" />
                 </svg>
@@ -129,7 +127,6 @@ export default function H5kTTab(_props: Props) {
               </button>
 
               <button className="h5kt-ctrl-btn" title="Fine Adjust">
-
                 <svg viewBox="0 0 36 36" className="ctrl-icon">
                   <path d="M18 28 L6 10 H30 Z" fill="url(#grad-orange)" />
                 </svg>
@@ -162,7 +159,6 @@ export default function H5kTTab(_props: Props) {
                 <input type="text" readOnly value={rawText} />
                 <span className="h5kt-live-unit">count</span>
               </div>
-
               <div className="h5kt-live-row">
                 <span className="h5kt-live-label">Δ Raw</span>
                 <input type="text" readOnly value={deltaText} />
@@ -196,7 +192,6 @@ export default function H5kTTab(_props: Props) {
             </div>
           </section>
 
-
           {/* STRAIN */}
           <section className="h5kt-panel h5kt-sigma-eps-panel">
             <div className="h5kt-panel-header">
@@ -228,7 +223,6 @@ export default function H5kTTab(_props: Props) {
                 type="text"
                 inputMode="decimal"
                 value={factorText}
-
                 onChange={(e) => setFactorText(e.target.value)}
                 title="Hệ số calibration (µε/count), 0 = chưa hiệu chuẩn"
                 style={{ width: 90 }}
@@ -237,13 +231,32 @@ export default function H5kTTab(_props: Props) {
             </label>
             <label
               style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}
-              title="Nhân -1 cho Δ, Filtered và ε (nén tải => giá trị tăng)"
+              title="Nhân -1 cho Δ, Filtered và ε (áp dụng cho mẫu mới). Bật: dãn mẫu => giá trị tăng từ mốc 0."
             >
               <input type="checkbox" checked={invert} onChange={(e) => setInvert(e.target.checked)} />
-              Đảo chiều
+              Đảo dấu dữ liệu
             </label>
-            <button disabled={!connected} style={dis(!connected)} onClick={zero}>⊘ ZERO</button>
-            <button disabled={!connected || recording} style={dis(!connected || recording)} onClick={start}>
+            <label
+              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}
+              title="Lật chiều trục Y của đồ thị. Không đổi dữ liệu. Đừng bật cùng Đảo dấu dữ liệu."
+            >
+              <input type="checkbox" checked={flipY} onChange={(e) => setFlipY(e.target.checked)} />
+              Đảo trục Y
+            </label>
+            <button
+              disabled={!connected || recording}
+              style={dis(!connected || recording)}
+              onClick={zero}
+              title="Tuỳ chọn: đặt lại mốc trong ESP32. Không cần nếu chỉ dùng START (mốc tự lấy)."
+            >
+              ⊘ ZERO
+            </button>
+            <button
+              disabled={!connected || recording}
+              style={dis(!connected || recording)}
+              onClick={start}
+              title="Kẹp mẫu trước, rồi bấm START: mốc 0 được lấy tại thời điểm này"
+            >
               ▶ START
             </button>
             <button disabled={!connected || !recording} style={dis(!connected || !recording)} onClick={stop}>
@@ -261,7 +274,6 @@ export default function H5kTTab(_props: Props) {
 
         <div className="h5kt-results__table-wrapper">
           <StrainTable rowsRef={rowsRef} tick={Math.floor(tick / 4)} />
-
         </div>
       </section>
     </div>

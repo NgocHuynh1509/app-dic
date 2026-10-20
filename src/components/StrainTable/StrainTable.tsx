@@ -29,7 +29,7 @@ function StrainTable({ rowsRef }: Props) {
           {shown.length === 0 ? (
             <tr>
               <td colSpan={CSV_COLUMNS.length} className="strain-table-empty">
-                Chưa có dữ liệu — bấm ZERO rồi START để bắt đầu đo
+                Chưa có dữ liệu — kẹp mẫu rồi bấm START để bắt đầu đo
               </td>
             </tr>
           ) : (
@@ -39,10 +39,11 @@ function StrainTable({ rowsRef }: Props) {
                 <td>{r.deviceMs}</td>
                 <td>{r.t.toFixed(3)}</td>
                 <td>{r.raw}</td>
-                <td>{r.delta}</td>
+                <td>{r.delta.toFixed(1)}</td>
                 <td>{r.filtered.toFixed(1)}</td>
                 <td>{r.strain === null ? "" : r.strain.toFixed(3)}</td>
                 <td>{r.factor}</td>
+                <td>{r.baseline.toFixed(1)}</td>
                 <td>{r.sign}</td>
               </tr>
             ))

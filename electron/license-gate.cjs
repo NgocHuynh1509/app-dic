@@ -2,11 +2,9 @@ const { BrowserWindow, ipcMain, dialog, shell, app } = require('electron');
 const path = require('node:path');
 const license = require('./license.cjs');
 
-const HEARTBEAT_MS = 60 * 1000;
-
 const MESSAGES = {
   LOGIN_REQUIRED: 'Vui lòng đăng nhập để sử dụng phần mềm.',
-  NO_NETWORK: 'Không kết nối được máy chủ. Phần mềm yêu cầu có mạng — kiểm tra kết nối rồi bấm "Thử lại".',
+  NO_NETWORK: 'Không kết nối được máy chủ. Cần có mạng để đăng nhập — kiểm tra kết nối rồi thử lại.',
   BAD_CREDENTIALS: 'Sai email hoặc mật khẩu.',
   INVALID_LICENSE: 'License key không hợp lệ.',
   REVOKED: 'License đã bị khóa. Liên hệ nhà cung cấp.',
@@ -18,7 +16,6 @@ const MESSAGES = {
 };
 
 let loginWin = null;
-let heartbeatTimer = null;
 let mainStarted = false;
 let opts = null;
 
@@ -61,54 +58,39 @@ function handleFail(res) {
   showLogin(res.reason);
 }
 
-function stopHeartbeat() {
-  if (heartbeatTimer) clearInterval(heartbeatTimer);
-  heartbeatTimer = null;
-}
-
-// Khóa từ xa: đóng cửa sổ chính, quay lại màn hình đăng nhập (hoặc thoát nếu bắt update)
-function lock(res) {
-  stopHeartbeat();
-  mainStarted = false;
-  handleFail(res); // mở login trước để app không tự thoát khi hết cửa sổ
-  opts.closeMainWindows();
-}
-
-function startHeartbeat() {
-  stopHeartbeat();
-  heartbeatTimer = setInterval(async () => {
-    const res = await license.heartbeat();
-    if (!res.ok) lock(res);
-  }, HEARTBEAT_MS);
-}
-
+// Hợp lệ: mở cửa sổ chính rồi mới đóng cửa sổ login (tránh app tự thoát khi hết cửa sổ).
+// Sau bước này KHÔNG còn kiểm tra license nào nữa cho tới khi tắt app.
 async function proceed(res) {
   if (!res.ok) return handleFail(res);
-  if (loginWin) loginWin.close();
   if (!mainStarted) {
     mainStarted = true;
-    opts.createMainWindow();
+    await opts.createMainWindow();
   }
-  startHeartbeat();
+  if (loginWin) loginWin.close();
 }
 
 /**
- * @param {{ createMainWindow: () => void, closeMainWindows: () => void }} options
+ * @param {{ createMainWindow: () => Promise<void>|void, closeMainWindows?: () => void }} options
  */
 async function startLicenseGate(options) {
   opts = options;
 
   ipcMain.handle('license:login', async (_e, creds) => {
     const res = await license.login(creds);
-    if (res.ok) await proceed(res);
-    else if (res.reason === 'UPDATE_REQUIRED') handleFail(res);
-    return res.ok ? { ok: true } : { ok: false, message: MESSAGES[res.reason] || MESSAGES.UNKNOWN, reason: res.reason };
+    if (res.ok) {
+      await proceed(res);
+      return { ok: true };
+    }
+    if (res.reason === 'UPDATE_REQUIRED') handleFail(res);
+    return { ok: false, message: MESSAGES[res.reason] || MESSAGES.UNKNOWN, reason: res.reason };
   });
 
+  // Nút "Thử lại": kiểm tra lại session đã lưu (nếu có)
   ipcMain.handle('license:retry', async () => {
     await proceed(await license.validate());
   });
 
+  // Mở app: kiểm tra session đã lưu (online, hoặc offline bằng token ký)
   await proceed(await license.validate());
 }
 

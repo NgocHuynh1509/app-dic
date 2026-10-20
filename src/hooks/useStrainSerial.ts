@@ -4,11 +4,12 @@ export interface StrainSample {
   t: number;
   deviceMs: number;
   raw: number;
-  delta: number; // đã nhân sign
-  filtered: number; // đã nhân sign
+  delta: number; // = sign * (delta thiết bị - baseline)
+  filtered: number; // = sign * (filtered thiết bị - baseline)
   strain: number | null;
   factor: number;
-  sign: 1 | -1; // -1 = đã đảo chiều
+  baseline: number; // mốc 0 lấy lúc START (đơn vị delta của thiết bị)
+  sign: 1 | -1; // -1 = đã đảo dấu
 }
 
 export type StrainRow = StrainSample & { hostTime: string };
@@ -40,6 +41,7 @@ declare global {
 
 export const PLOT_WINDOW_SECONDS = 30;
 const RENDER_INTERVAL_MS = 50; // ~20 lần vẽ/giây
+const BASELINE_SAMPLES = 10; // số mẫu đầu dùng để lấy mốc 0
 
 export const CSV_COLUMNS = [
   "host_time",
@@ -50,11 +52,15 @@ export const CSV_COLUMNS = [
   "filtered_delta",
   "strain_ue",
   "calibration_ue_per_count",
+  "baseline",
   "sign",
 ] as const;
 
 export function rowToCells(r: StrainRow): (string | number)[] {
-  return [r.hostTime, r.deviceMs, r.t, r.raw, r.delta, r.filtered, r.strain ?? "", r.factor, r.sign];
+  return [
+    r.hostTime, r.deviceMs, r.t, r.raw, r.delta, r.filtered,
+    r.strain ?? "", r.factor, r.baseline, r.sign,
+  ];
 }
 
 interface Options {
@@ -76,6 +82,9 @@ export function useStrainSerial({ factor = 0, invert = true }: Options = {}) {
   const recordingRef = useRef(false);
   const dirtyRef = useRef(false);
 
+  const baselineRef = useRef<number | null>(null);
+  const baseBufRef = useRef<number[]>([]);
+
   const latestRef = useRef<StrainSample | null>(null);
   const statsRef = useRef<StrainStats>({ minDelta: null, maxDelta: null, count: 0 });
   const rowsRef = useRef<StrainRow[]>([]);
@@ -85,6 +94,8 @@ export function useStrainSerial({ factor = 0, invert = true }: Options = {}) {
   useEffect(() => { invertRef.current = invert; }, [invert]);
 
   const resetSession = useCallback(() => {
+    baselineRef.current = null;
+    baseBufRef.current = [];
     latestRef.current = null;
     statsRef.current = { minDelta: null, maxDelta: null, count: 0 };
     rowsRef.current = [];
@@ -108,10 +119,18 @@ export function useStrainSerial({ factor = 0, invert = true }: Options = {}) {
       } else if (type === "log") {
         setLogs((l) => [...l.slice(-199), String(payload)]);
       } else if (type === "data") {
+        // Mốc 0 = trung bình BASELINE_SAMPLES mẫu đầu sau START (lúc mẫu vừa được kẹp)
+        const buf = baseBufRef.current;
+        if (baselineRef.current === null || buf.length < BASELINE_SAMPLES) {
+          buf.push(payload.delta);
+          baselineRef.current = buf.reduce((a, b) => a + b, 0) / buf.length;
+        }
+        const baseline = baselineRef.current as number;
+
         const f = factorRef.current;
         const sign: 1 | -1 = invertRef.current ? -1 : 1;
-        const delta = sign * payload.delta;
-        const filtered = sign * payload.filtered;
+        const delta = sign * (payload.delta - baseline);
+        const filtered = sign * (payload.filtered - baseline);
         const s: StrainSample = {
           t: payload.t,
           deviceMs: payload.deviceMs,
@@ -120,6 +139,7 @@ export function useStrainSerial({ factor = 0, invert = true }: Options = {}) {
           filtered,
           strain: f === 0 ? null : filtered * f,
           factor: f,
+          baseline,
           sign,
         };
 
@@ -162,7 +182,7 @@ export function useStrainSerial({ factor = 0, invert = true }: Options = {}) {
   const zero = useCallback(() => { api?.send("ZERO"); }, [api]);
 
   const start = useCallback(() => {
-    resetSession();
+    resetSession(); // xoá mốc cũ; mốc mới lấy từ các mẫu đầu sau START
     recordingRef.current = true;
     setRecording(true);
     api?.send("START");
