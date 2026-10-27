@@ -45,6 +45,11 @@ function StrainTable({ rowsRef }: Props) {
                 <td>{r.factor}</td>
                 <td>{r.baseline.toFixed(1)}</td>
                 <td>{r.sign}</td>
+                <td>{`HX${r.channel}`}</td>
+                <td>{r.sampleIndex ?? ""}</td>
+                <td>{r.enabled ? "1" : "0"}</td>
+                <td>{r.lengthMm == null ? "" : r.lengthMm.toFixed(4)}</td>
+                <td>{r.lengthSignal ?? ""}</td>
               </tr>
             ))
           )}

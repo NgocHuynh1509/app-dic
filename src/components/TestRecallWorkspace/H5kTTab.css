@@ -87,7 +87,8 @@ body,
 
 /* RIGHT SIDEBAR */
 .h5kt-right-sidebar {
-  flex: 0 0 310px;
+  flex: 0 0 370px;
+  max-width: 48%;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -272,7 +273,62 @@ body,
   padding: 4px;
   background: #11130f;
   min-height: 0;
+  overflow: auto;
 }
+
+.h5kt-channel-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.h5kt-channel-table th,
+.h5kt-channel-table td {
+  border: 1px solid #33392a;
+  padding: 3px;
+  text-align: center;
+}
+.h5kt-channel-table th:first-child { width: 72px; color: #c7d0bf; font-weight: 500; }
+.h5kt-channel-table td { background: #11130f; }
+.h5kt-channel-table input[type="text"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 2px;
+  border: 1px solid #33392a;
+  background: #000;
+  color: #e5ecd8;
+  text-align: right;
+  font: 11px Consolas, monospace;
+}
+.h5kt-channel-label {
+  display: inline-block;
+  padding: 2px 4px;
+  border-radius: 2px;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.h5kt-length-calibration { flex: 0 0 auto; font-size: 10px; color: #dce5d4; }
+.h5kt-length-calibration summary { cursor: pointer; padding: 5px 2px; font-weight: 600; }
+.h5kt-length-calibration p { margin: 5px 0; line-height: 1.5; }
+.h5kt-length-calibration small { display: block; margin: 3px 0; overflow-wrap: anywhere; }
+.h5kt-length-calibration button {
+  margin: 3px 0;
+  padding: 3px;
+  width: 100%;
+  color: #e5ecd8;
+  background: #252c20;
+  border: 1px solid #505744;
+  border-radius: 2px;
+  cursor: pointer;
+  font: inherit;
+}
+.h5kt-length-calibration button:disabled { opacity: .45; cursor: default; }
+.h5kt-length-error { color: #ffb4ab; }
 
 .h5kt-sigma-eps-row {
   flex: 1 1 0;
@@ -331,19 +387,33 @@ body,
 
 /* RESULTS TOOLBAR DÀNH CHO H5KTTAB.CSS */
 .h5kt-results__toolbar {
-  flex: 0 0 28px !important;
+  flex: 0 0 auto !important;
+  min-height: 28px;
   background: linear-gradient(180deg, #4d5243 0%, #292d23 100%) !important;
   border-bottom: 1px solid #383e2e !important;
-  padding: 0 8px !important;
+  padding: 4px 8px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .h5kt-results__tools {
   display: flex !important;
+  flex-wrap: wrap;
   gap: 4px !important;
   align-items: center !important;
+}
+
+.h5kt-results__tools label { white-space: nowrap; }
+.h5kt-results__tools select {
+  background: #20241b;
+  color: #e5ecd8;
+  border: 1px solid #505744;
+  border-radius: 2px;
+  padding: 2px 4px;
+  font: inherit;
 }
 
 .h5kt-results__tools button {

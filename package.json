@@ -15,10 +15,13 @@
     "electron:build": "npm run build && electron-builder --win",
     "dic:server": "cross-env DIC_AUTH_DISABLED=1 node server/index.js",
     "dic:dev": "concurrently -k -n server,client \"cross-env DIC_AUTH_DISABLED=1 node server/index.js\" \"vite\"",
-    "dic:selftest": "node scripts/selftest-dic.mjs"
+    "dic:selftest": "node scripts/selftest-dic.mjs",
+    "dic:license:test": "node scripts/particle-dic-license.test.cjs",
+    "strain:test": "node --experimental-strip-types scripts/strain-multichannel.test.mjs && node scripts/strain-connection.test.cjs && node --experimental-strip-types scripts/strain-length.test.mjs"
   },
   "dependencies": {
     "@techstark/opencv-js": "^4.11.0-release.1",
+    "better-sqlite3": "^13.0.3",
     "cors": "^2.8.5",
     "delaunator": "^5.0.1",
     "express": "^4.19.2",
@@ -29,6 +32,8 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.2.1",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
@@ -37,6 +42,7 @@
     "cross-env": "^10.1.0",
     "electron": "^44.5.1",
     "electron-builder": "^26.15.3",
+    "electron-rebuild": "^3.2.9",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
@@ -69,6 +75,10 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },
-    "asarUnpack": ["node_modules/@serialport/**", "node_modules/serialport/**"]
+    "asarUnpack": [
+      "node_modules/@serialport/**",
+      "node_modules/serialport/**",
+      "**/node_modules/better-sqlite3/**"
+    ]
   }
 }

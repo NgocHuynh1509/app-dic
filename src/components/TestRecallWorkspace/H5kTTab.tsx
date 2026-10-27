@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import type { LiveData, GraphPoint, Specimen } from "../../types";
 import StrainChart from "../StrainChart/StrainChart";
 import StrainTable from "../StrainTable/StrainTable";
+import ProjectBar from "../ProjectBar/ProjectBar";
 import { useStrainSerial } from "../../hooks/useStrainSerial";
+import { CHANNEL_LABELS, CHANNEL_COLORS } from "../../hooks/strainSession";
+import { StrainChannelReadings, StrainChannelCalibration } from "../StrainChannelReadings/StrainChannelReadings";
+import LengthCalibrationPanel from "../StrainChannelReadings/LengthCalibrationPanel";
+import { loadLengthCalibrations, saveLengthCalibrations } from "../../hooks/strainLengthCalibration";
+import type { LengthCalibration } from "../../hooks/strainLengthCalibration";
+import { dbApi } from "../../hooks/projectApi";
+import type { SpecimenInfo } from "../../hooks/projectApi";
 import "./H5kTTab.css";
 
 interface Props {
@@ -15,27 +23,70 @@ interface Props {
   onRegenerate?: () => void;
 }
 
-const dash = "--";
 const dis = (d: boolean): CSSProperties | undefined =>
   d ? { opacity: 0.45, cursor: "not-allowed" } : undefined;
 
 export default function H5kTTab(_props: Props) {
-  const [factorText, setFactorText] = useState("0");
-  const [invert, setInvert] = useState(true); // dãn mẫu => giá trị tăng từ mốc 0
+  const [factorTexts, setFactorTexts] = useState(["0", "0", "0"]);
+  const [showRaw, setShowRaw] = useState(false);
+  const [enabledChannels, setEnabledChannels] = useState([false, false, false]);
+  const [inversions, setInversions] = useState([true, true, true]);
   const [flipY, setFlipY] = useState(false); // lật chiều trục Y của đồ thị
+  const [lengthCalibrations, setLengthCalibrations] = useState(loadLengthCalibrations);
+  const [lengthStorageError, setLengthStorageError] = useState('');
+  const [specimen, setSpecimen] = useState<SpecimenInfo | null>(null);
+  const [savedRuns, setSavedRuns] = useState(0);
+  const [dbMessage, setDbMessage] = useState('');
 
-  const parsed = parseFloat(factorText.replace(",", "."));
-  const factor = Number.isFinite(parsed) ? parsed : 0;
+  useEffect(() => { setSavedRuns(specimen?.runCount ?? 0); }, [specimen?.id, specimen?.runCount]);
+
+  function applyLengthCalibration(index: number, calibration: LengthCalibration | null) {
+    const next = lengthCalibrations.map((entry, i) => i === index ? calibration : entry);
+    setLengthCalibrations(next);
+    setLengthStorageError(saveLengthCalibrations(next) ? '' : 'Đã áp dụng nhưng chưa lưu được trên máy; hãy ghi lại hai mốc trước khi đóng app.');
+  }
+
+  const factors = factorTexts.map((text) => {
+    const parsed = parseFloat(text.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : 0;
+  });
 
   const {
     available, status, connected, hxReady, recording, tick, latest, stats,
-    seriesRef, rowsRef, zero, start, stop, clear, exportCsv,
-  } = useStrainSerial({ factor, invert });
+    channelCount, hxStates, frameCount, seriesRef, rowsRef, zero, start, stop, clear,
+  } = useStrainSerial({ factors, enabledChannels, lengthCalibrations, invert: inversions });
+
+  async function handleStop() {
+    stop();
+    const api = dbApi();
+    if (!api || !specimen) return;
+    const rows = rowsRef.current.slice();
+    if (!rows.length) return;
+    try {
+      await api.saveRun(specimen.id, rows);
+      setSavedRuns((n) => n + 1);
+      setDbMessage(`Đã lưu ${rows.length} dòng vào SQLite (mẫu "${specimen.name}").`);
+    } catch (e) {
+      setDbMessage(`Lưu SQLite thất bại: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  async function handleExportPdf() {
+    const api = dbApi();
+    if (!api || !specimen) return;
+    const result = await api.exportPdf(specimen.id);
+    if (result.ok) setDbMessage(`Đã xuất PDF: ${result.path}`);
+    else if (result.error) setDbMessage(result.error);
+  }
+
+  const channelStatus = channelCount === 3
+    ? [1, 2, 3].map((id) => `HX${id} ${!enabledChannels[id - 1] ? "TẮT" : hxStates[id - 1] === undefined ? "--" : hxStates[id - 1] ? "READY" : "BUSY"}`).join(" · ")
+    : `HX711 ${!enabledChannels[0] ? "TẮT" : hxReady ? "READY" : "NOT READY"}`;
 
   const statusText = !available
     ? "(Chỉ hỗ trợ bản Electron)"
     : connected
-      ? `(ESP32 ${status.port ?? ""} · HX711 ${hxReady ? "READY" : "NOT READY"})`
+      ? `(ESP32 ${status.port ?? ""} · ${channelStatus})`
       : status.state === "trying"
         ? `(Đang thử ${status.port ?? ""}...)`
         : status.state === "disconnected"
@@ -44,13 +95,8 @@ export default function H5kTTab(_props: Props) {
             ? "(Không thấy cổng USB Serial)"
             : "(Đang tìm ESP32...)";
 
-  const rawText = latest ? String(latest.raw) : dash;
-  const deltaText = latest ? latest.delta.toFixed(1) : dash;
-  const filteredText = latest ? latest.filtered.toFixed(1) : dash;
-  const minText = stats.minDelta === null ? dash : stats.minDelta.toFixed(1);
-  const maxText = stats.maxDelta === null ? dash : stats.maxDelta.toFixed(1);
-  const timeText = latest ? latest.t.toFixed(2) : "0.00";
-  const strainText = latest && latest.strain !== null ? latest.strain.toFixed(3) : dash;
+  const channelProps = { latest, stats, channelCount, enabled: enabledChannels, labels: CHANNEL_LABELS, colors: CHANNEL_COLORS };
+  const canStart = connected && !recording && !!specimen;
 
   return (
     <div className="h5kt-tab">
@@ -62,6 +108,9 @@ export default function H5kTTab(_props: Props) {
         <button className="h5kt-btn-dropdown">Panels ▾</button>
         <button className="h5kt-btn-dropdown">Layouts ▾</button>
       </div>
+
+      {/* PROJECT / MẪU */}
+      <ProjectBar disabled={recording} specimen={specimen} onSelectSpecimen={setSpecimen} />
 
       {/* TOP WORKSPACE: GRAPH & SIDEBAR */}
       <div className="h5kt-top-content">
@@ -75,7 +124,8 @@ export default function H5kTTab(_props: Props) {
             </div>
           </div>
           <div className="h5kt-graph-content">
-            <StrainChart seriesRef={seriesRef} tick={tick} live={recording} flipY={flipY} />
+            <StrainChart seriesRef={seriesRef} tick={tick} live={recording} flipY={flipY}
+              channelCount={channelCount} showRaw={showRaw} enabledChannels={enabledChannels} />
           </div>
         </section>
 
@@ -147,66 +197,33 @@ export default function H5kTTab(_props: Props) {
           {/* LIVE DATA (HX711) */}
           <section className="h5kt-panel h5kt-live-panel">
             <div className="h5kt-panel-header">
-              <span>Live Data</span>
+              <span>Live Data · từng kênh độc lập</span>
               <div className="h5kt-panel-actions">
                 <button title="Minimize">_</button>
                 <button title="Close">✕</button>
               </div>
             </div>
             <div className="h5kt-live-data">
-              <div className="h5kt-live-row">
-                <span className="h5kt-live-label">Raw HX711</span>
-                <input type="text" readOnly value={rawText} />
-                <span className="h5kt-live-unit">count</span>
-              </div>
-              <div className="h5kt-live-row">
-                <span className="h5kt-live-label">Δ Raw</span>
-                <input type="text" readOnly value={deltaText} />
-                <span className="h5kt-live-unit">count</span>
-              </div>
-              <div className="h5kt-live-row">
-                <span className="h5kt-live-label">Filtered</span>
-                <input type="text" readOnly value={filteredText} />
-                <span className="h5kt-live-unit">count</span>
-              </div>
-              <div className="h5kt-live-row">
-                <span className="h5kt-live-label">Min Δ</span>
-                <input type="text" readOnly value={minText} />
-                <span className="h5kt-live-unit">count</span>
-              </div>
-              <div className="h5kt-live-row">
-                <span className="h5kt-live-label">Max Δ</span>
-                <input type="text" readOnly value={maxText} />
-                <span className="h5kt-live-unit">count</span>
-              </div>
-              <div className="h5kt-live-row">
-                <span className="h5kt-live-label">Số mẫu</span>
-                <input type="text" readOnly value={String(stats.count)} />
-                <span className="h5kt-live-unit">mẫu</span>
-              </div>
-              <div className="h5kt-live-row">
-                <span className="h5kt-live-label">Time</span>
-                <input type="text" readOnly value={timeText} />
-                <span className="h5kt-live-unit">s</span>
-              </div>
+              <StrainChannelReadings {...channelProps} />
             </div>
           </section>
 
           {/* STRAIN */}
           <section className="h5kt-panel h5kt-sigma-eps-panel">
             <div className="h5kt-panel-header">
-              <span>Strain (ε)</span>
+              <span>Strain (ε) · hiệu chuẩn riêng từng kênh</span>
               <div className="h5kt-panel-actions">
                 <button title="Minimize">_</button>
                 <button title="Close">✕</button>
               </div>
             </div>
             <div className="h5kt-sigma-eps-body">
-              <div className="h5kt-sigma-eps-row">
-                <span className="h5kt-sigma-eps-label">ε</span>
-                <span className="h5kt-sigma-eps-value">{strainText}</span>
-                <span className="h5kt-sigma-eps-unit">µε</span>
-              </div>
+              <StrainChannelCalibration {...channelProps} factorTexts={factorTexts} inversions={inversions}
+                onFactorChange={(index, text) => setFactorTexts((old) => old.map((value, i) => i === index ? text : value))}
+                onInvertChange={(index, inverted) => setInversions((old) => old.map((value, i) => i === index ? inverted : value))} />
+              <LengthCalibrationPanel latest={latest} enabled={enabledChannels} channelCount={channelCount}
+                recording={recording} calibrations={lengthCalibrations} onApply={applyLengthCalibration}
+                storageError={lengthStorageError} />
             </div>
           </section>
         </div>
@@ -215,27 +232,23 @@ export default function H5kTTab(_props: Props) {
       {/* BOTTOM RESULTS AREA */}
       <section className="h5kt-panel h5kt-results">
         <div className="h5kt-results__toolbar">
-          <span className="h5kt-results__title">Testing - Single Mode</span>
+          <span className="h5kt-results__title">{channelCount === 3 ? "Testing - 3 HX711" : "Testing - Single Mode"}</span>
           <div className="h5kt-results__tools">
-            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}>
-              Hệ số
-              <input
-                type="text"
-                inputMode="decimal"
-                value={factorText}
-                onChange={(e) => setFactorText(e.target.value)}
-                title="Hệ số calibration (µε/count), 0 = chưa hiệu chuẩn"
-                style={{ width: 90 }}
-              />
-              µε/count
-            </label>
-            <label
-              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}
-              title="Nhân -1 cho Δ, Filtered và ε (áp dụng cho mẫu mới). Bật: dãn mẫu => giá trị tăng từ mốc 0."
-            >
-              <input type="checkbox" checked={invert} onChange={(e) => setInvert(e.target.checked)} />
-              Đảo dấu dữ liệu
-            </label>
+            <span style={{ fontSize: 12 }}>Kênh đã nối cảm biến:</span>
+            {CHANNEL_LABELS.slice(0, channelCount).map((label, index) => (
+              <label key={label} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}
+                title={`${label}: chỉ bật khi đã nối strain gauge/load cell. Tắt = đường 0.`}>
+                <input type="checkbox" checked={enabledChannels[index]}
+                  onChange={(event) => setEnabledChannels((old) => old.map((enabled, i) => i === index ? event.target.checked : enabled))} />
+                <span className="h5kt-channel-label" style={{ color: CHANNEL_COLORS[index] }}>{`HX${index + 1}`}</span>
+              </label>
+            ))}
+            {channelCount === 3 && <>
+              <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}>
+                <input type="checkbox" checked={showRaw} onChange={(e) => setShowRaw(e.target.checked)} />
+                Hiện Δ raw
+              </label>
+            </>}
             <label
               style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}
               title="Lật chiều trục Y của đồ thị. Không đổi dữ liệu. Đừng bật cùng Đảo dấu dữ liệu."
@@ -252,23 +265,31 @@ export default function H5kTTab(_props: Props) {
               ⊘ ZERO
             </button>
             <button
-              disabled={!connected || recording}
-              style={dis(!connected || recording)}
+              disabled={!canStart}
+              style={dis(!canStart)}
               onClick={start}
-              title="Kẹp mẫu trước, rồi bấm START: mốc 0 được lấy tại thời điểm này"
+              title={specimen
+                ? "Kẹp mẫu trước, rồi bấm START: mốc 0 được lấy tại thời điểm này"
+                : "Hãy chọn project và mẫu trước khi START"}
             >
               ▶ START
             </button>
-            <button disabled={!connected || !recording} style={dis(!connected || !recording)} onClick={stop}>
+            <button disabled={!connected || !recording} style={dis(!connected || !recording)} onClick={handleStop}>
               ■ STOP
             </button>
-            <button disabled={stats.count === 0} style={dis(stats.count === 0)} onClick={exportCsv}>
-              💾 CSV
+            <button
+              disabled={!specimen || savedRuns === 0 || recording}
+              style={dis(!specimen || savedRuns === 0 || recording)}
+              onClick={handleExportPdf}
+              title="Xuất PDF phiên đo gần nhất của mẫu đang chọn (lấy từ SQLite)"
+            >
+              📄 PDF
             </button>
-            <button disabled={recording || stats.count === 0} style={dis(recording || stats.count === 0)} onClick={clear}>
+            <button disabled={recording || frameCount === 0} style={dis(recording || frameCount === 0)} onClick={clear}>
               🧹 Xóa
             </button>
-            <span style={{ fontSize: 12, color: "#aaa" }}>Số mẫu: {stats.count}</span>
+            <span style={{ fontSize: 12, color: "#aaa" }}>Số mẫu: {frameCount}{channelCount === 3 ? " / kênh" : ""}</span>
+            {dbMessage && <span style={{ fontSize: 12, color: "#8bc34a" }}>{dbMessage}</span>}
           </div>
         </div>
 

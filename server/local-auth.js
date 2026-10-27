@@ -16,10 +16,11 @@ function safeEqual(a, b) {
 
 // true khi app đã bị khóa (không còn token hợp lệ nào) -> server nên ngắt các kết nối đang mở
 export function isLocked() {
-  return !authDisabled() && !process.env.DIC_LOCAL_TOKEN;
+  return process.env.DIC_FEATURE_UNLOCKED === '0' || (!authDisabled() && !process.env.DIC_LOCAL_TOKEN);
 }
 
 export function isAuthorized(token) {
+  if (process.env.DIC_FEATURE_UNLOCKED === '0') return false;
   if (authDisabled()) return true;
   const real = process.env.DIC_LOCAL_TOKEN || '';
   return !!real && !!token && safeEqual(token, real);

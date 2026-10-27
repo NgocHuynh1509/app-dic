@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { MutableRefObject } from "react";
 import type { StrainSample } from "../../hooks/useStrainSerial";
+import { buildStrainTraces } from "../../hooks/strainSession";
 
 interface Props {
   seriesRef: MutableRefObject<StrainSample[]>;
@@ -8,14 +9,15 @@ interface Props {
   live: boolean;
   windowSec?: number;
   flipY?: boolean; // true: giá trị lớn nằm dưới, nhỏ nằm trên
+  channelCount?: number;
+  showRaw?: boolean;
+  enabledChannels?: readonly boolean[];
 }
 
-const RAW_COLOR = "#f0b429";
-const FILTERED_COLOR = "#35b7ff";
-
-export default function StrainChart({ seriesRef, tick, live, windowSec = 30, flipY = false }: Props) {
+export default function StrainChart({ seriesRef, tick, live, windowSec = 30, flipY = false, channelCount = 1, showRaw = false, enabledChannels }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawRef = useRef<() => void>(() => {});
 
   const draw = () => {
     const wrap = wrapRef.current;
@@ -47,12 +49,16 @@ export default function StrainChart({ seriesRef, tick, live, windowSec = 30, fli
     ctx.textBaseline = "middle";
     ctx.fillText(`Δ HX711 vs Thời gian • ${live ? "LIVE" : "STOP"}`, w / 2, 12);
 
-    const L = 70, R = 16, T = 36, B = 46;
+    const L = 70, R = 16, B = 46;
+    const columns = Math.max(1, Math.min(channelCount === 1 ? 2 : 3, Math.floor((w - L - R) / 150)));
+    const traceCount = channelCount === 1 ? 2 : channelCount * (showRaw ? 2 : 1);
+    const T = 44 + Math.ceil(traceCount / columns) * 16;
     const pw = w - L - R;
     const ph = h - T - B;
     if (pw <= 10 || ph <= 10) return;
 
     const data = seriesRef.current;
+    const traces = buildStrainTraces(data, channelCount, showRaw, enabledChannels);
 
     // Trục X: bắt đầu từ 0 (lúc START), trượt khi quá windowSec
     let xMin = 0, xMax = windowSec;
@@ -64,9 +70,11 @@ export default function StrainChart({ seriesRef, tick, live, windowSec = 30, fli
       xMin = Math.max(0, xMax - windowSec);
 
       let lo = 0, hi = 0;
-      for (const s of data) {
-        lo = Math.min(lo, s.delta, s.filtered);
-        hi = Math.max(hi, s.delta, s.filtered);
+      for (const trace of traces) {
+        for (const point of trace.points) {
+          lo = Math.min(lo, point.value);
+          hi = Math.max(hi, point.value);
+        }
       }
       if (hi - lo < 1) hi = lo + 1;
       const pad = (hi - lo) * 0.08;
@@ -134,46 +142,52 @@ export default function StrainChart({ seriesRef, tick, live, windowSec = 30, fli
     ctx.restore();
 
     // đường dữ liệu
-    const plot = (key: "delta" | "filtered", color: string, width: number) => {
-      if (data.length < 2) return;
+    const plot = (trace: typeof traces[number]) => {
+      if (trace.points.length < 2) return;
       ctx.save();
       ctx.beginPath();
       ctx.rect(L, T, pw, ph);
       ctx.clip();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = width;
+      ctx.strokeStyle = trace.color;
+      ctx.lineWidth = trace.raw ? 1.2 : 2;
+      ctx.setLineDash(trace.raw && channelCount > 1 ? [4, 3] : []);
       ctx.lineJoin = "round";
       ctx.beginPath();
-      data.forEach((s, i) => {
-        const x = px(s.t), y = py(s[key]);
+      trace.points.forEach((s, i) => {
+        const x = px(s.t), y = py(s.value);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
       ctx.stroke();
       ctx.restore();
     };
-    plot("delta", RAW_COLOR, 1.2);
-    plot("filtered", FILTERED_COLOR, 2);
+    traces.forEach(plot);
 
     // chú thích
     ctx.font = "11px sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = RAW_COLOR; ctx.fillRect(L + 8, T + 8, 14, 3);
-    ctx.fillStyle = "#222"; ctx.fillText("Δ raw", L + 28, T + 10);
-    ctx.fillStyle = FILTERED_COLOR; ctx.fillRect(L + 78, T + 8, 14, 3);
-    ctx.fillStyle = "#222"; ctx.fillText("Filtered", L + 98, T + 10);
+    traces.forEach((trace, i) => {
+      const x = L + 8 + (i % columns) * (pw / columns);
+      const y = 34 + Math.floor(i / columns) * 16;
+      ctx.strokeStyle = trace.color;
+      ctx.lineWidth = trace.raw ? 1.2 : 2;
+      ctx.setLineDash(trace.raw && channelCount > 1 ? [4, 3] : []);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 16, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#222"; ctx.fillText(trace.label, x + 22, y);
+    });
   };
 
   // vẽ lại mỗi lần render (tick hoặc flipY đổi)
-  useEffect(() => { draw(); });
+  useEffect(() => { drawRef.current = draw; draw(); });
   void tick;
 
   // vẽ lại khi đổi kích thước
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
-    const ro = new ResizeObserver(() => draw());
+    const ro = new ResizeObserver(() => drawRef.current());
     ro.observe(wrap);
     return () => ro.disconnect();
   }, []);

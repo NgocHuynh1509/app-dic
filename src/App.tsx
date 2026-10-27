@@ -7,6 +7,7 @@ import OutputEditor from "./components/OutputEditor/OutputEditor";
 import ResultEditor from "./components/ResultEditor/Resulteditor";
 import TestRecallWorkspace from "./components/TestRecallWorkspace/TestRecallWorkspace";
 import ParticleDIC from "./components/ParticleDIC/ParticleDIC.jsx";
+import ParticleDICGate from "./components/ParticleDIC/ParticleDICGate";
 import MachineControlDock from "./components/MachineControlDock/MachineControlDock";
 import StatusBar from "./components/StatusBar/StatusBar";
 import type { LiveData, TabId } from "./types";
@@ -99,7 +100,9 @@ export default function App() {
                 className="app__dic"
                 style={{ display: activeTab === "particle-dic" ? "block" : "none" }}
               >
-                <ParticleDIC />
+                <ParticleDICGate>
+                  <ParticleDIC />
+                </ParticleDICGate>
               </div>
             )}
           </main>
