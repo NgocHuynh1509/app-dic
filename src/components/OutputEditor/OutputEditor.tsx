@@ -1,26 +1,19 @@
 import overviewIcon from "../../assets/output-overview.svg";
-import liveDataIcon from "../../assets/live-data.svg";
-import resultLimitsIcon from "../../assets/result-limits.svg";
+import resultsIcon from "../../assets/result-limits.svg";
 import graphingIcon from "../../assets/graphing.svg";
-import reportingIcon from "../../assets/reporting.svg";
-import dataExportingIcon from "../../assets/data-exporting.svg";
+import dataIcon from "../../assets/live-data.svg";
+import exportIcon from "../../assets/data-exporting.svg";
 import { useState } from "react";
 import type { CSSProperties } from "react";
+import OutputOverviewPanel from "./OutputOverviewPanel";
+import ResultsPanel from "./ResultsPanel";
 import GraphingPanel from "./GraphingPanel";
-import ReportingPanel from "./ReportingPanel";
-import OutputOverviewPanel from "./OutputOverviewPanel.tsx";
-import LiveDataPanel from "./LiveDataPanel.tsx";
-import ResultLimitsPanel from "./ResultLimitsPanel.tsx";
-import DataExportingPanel from "./DataExportingPanel.tsx";
+import MeasurementsPanel from "./MeasurementsPanel";
+import DataExportingPanel from "./DataExportingPanel";
 import { colors, s } from "./Styles";
+import { formatTime, useSavedRuns } from "./useSavedRuns";
 
-export type OutputSubTab =
-  | "overview"
-  | "live-data"
-  | "result-limits"
-  | "graphing"
-  | "reporting"
-  | "data-exporting";
+export type OutputSubTab = "overview" | "results" | "graphing" | "data" | "export";
 
 interface SubNavItem {
   id: OutputSubTab;
@@ -29,36 +22,11 @@ interface SubNavItem {
 }
 
 const SUB_NAV: SubNavItem[] = [
-  {
-    id: "overview",
-    label: "Output\nOverview",
-    icon: overviewIcon,
-  },
-  {
-    id: "live-data",
-    label: "Live\nData",
-    icon: liveDataIcon,
-  },
-  {
-    id: "result-limits",
-    label: "Result\nLimits",
-    icon: resultLimitsIcon,
-  },
-  {
-    id: "graphing",
-    label: "Graphing",
-    icon: graphingIcon,
-  },
-  {
-    id: "reporting",
-    label: "Reporting",
-    icon: reportingIcon,
-  },
-  {
-    id: "data-exporting",
-    label: "Data\nExporting",
-    icon: dataExportingIcon,
-  },
+  { id: "overview", label: "Tổng\nquan", icon: overviewIcon },
+  { id: "results", label: "Kết\nquả", icon: resultsIcon },
+  { id: "graphing", label: "Biểu\nđồ", icon: graphingIcon },
+  { id: "data", label: "Dữ liệu\nđo", icon: dataIcon },
+  { id: "export", label: "Xuất\nPDF", icon: exportIcon },
 ];
 
 const ribbonStyle: CSSProperties = {
@@ -87,53 +55,33 @@ const ribbonBtnStyle = (active: boolean): CSSProperties => ({
   boxSizing: "border-box",
 });
 
-const actionBtnStyle = (variant?: "gold" | "danger"): CSSProperties => ({
+const actionBtnStyle = (variant?: "gold" | "danger", disabled?: boolean): CSSProperties => ({
   background: variant === "gold" ? colors.gold : "#3a4552",
   border: variant === "gold" ? "1px solid #a9840f" : "1px solid #55626f",
   color: variant === "gold" ? "#241c04" : variant === "danger" ? "#ff8a8a" : "#dfe4e8",
   padding: "5px 10px",
   borderRadius: 3,
-  cursor: "pointer",
+  cursor: disabled ? "not-allowed" : "pointer",
+  opacity: disabled ? 0.45 : 1,
   fontSize: 11,
   fontWeight: variant === "gold" ? 600 : 400,
 });
 
-interface OutputEditorProps {
-  /** Name shown in the "Selected Output:" bar */
-  selectedOutputName?: string;
-}
-
-export default function OutputEditor({
-  selectedOutputName = "Generic Compression - Force vs. Position",
-}: OutputEditorProps) {
-  const [subTab, setSubTab] = useState<OutputSubTab>("graphing");
+export default function OutputEditor() {
+  const [subTab, setSubTab] = useState<OutputSubTab>("overview");
+  const saved = useSavedRuns();
+  const noRun = saved.runId == null;
 
   return (
     <div style={s.page}>
-      {/* Sub-navigation ribbon */}
+      {/* Ribbon */}
       <div style={ribbonStyle}>
         {SUB_NAV.map((item) => (
-          <button
-            key={item.id}
-            style={ribbonBtnStyle(subTab === item.id)}
-            onClick={() => setSubTab(item.id)}
-          >
-            <img
-              src={item.icon}
-              alt=""
-              style={{
-                width: 22,
-                height: 22,
-                objectFit: "contain",
-                display: "block",
-              }}
-            />
+          <button key={item.id} style={ribbonBtnStyle(subTab === item.id)} onClick={() => setSubTab(item.id)}>
+            <img src={item.icon} alt="" style={{ width: 22, height: 22, objectFit: "contain", display: "block" }} />
             <span style={{ fontSize: 10, lineHeight: 1.15, textAlign: "center" }}>
               {item.label.split("\n").map((line, i) => (
-                <span key={i}>
-                  {line}
-                  <br />
-                </span>
+                <span key={i}>{line}<br /></span>
               ))}
             </span>
           </button>
@@ -142,15 +90,17 @@ export default function OutputEditor({
         <div style={{ flex: 1 }} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button style={actionBtnStyle()}>🔍</button>
-          <button style={actionBtnStyle("gold")}>Load</button>
-          <button style={actionBtnStyle("gold")}>Save</button>
-          <button style={actionBtnStyle()}>Save As...</button>
-          <button style={actionBtnStyle("danger")}>Delete Output</button>
+          <button style={actionBtnStyle()} onClick={() => void saved.reload()}>⟳ Làm mới</button>
+          <button style={actionBtnStyle("gold", noRun)} disabled={noRun} onClick={() => void saved.exportPdf()}>
+            📄 Xuất PDF
+          </button>
+          <button style={actionBtnStyle("danger", noRun)} disabled={noRun} onClick={() => void saved.remove()}>
+            Xóa lần đo
+          </button>
         </div>
       </div>
 
-      {/* Selected output bar */}
+      {/* Thanh chọn lần đo */}
       <div
         style={{
           background: colors.selectedBarBg,
@@ -159,20 +109,41 @@ export default function OutputEditor({
           fontSize: 12,
           borderBottom: "1px solid #10151b",
           boxSizing: "border-box",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        <span style={{ color: "#cfd6dc", marginRight: 6 }}>Selected Output:</span>
-        {selectedOutputName}
+        <span style={{ color: "#cfd6dc" }}>Lần đo đang chọn:</span>
+        <select
+          style={{ ...s.fieldInput, width: 460, flex: "none" }}
+          value={saved.runId ?? ""}
+          onChange={(e) => saved.setRunId(e.target.value ? Number(e.target.value) : null)}
+          disabled={saved.runs.length === 0}
+        >
+          {saved.runs.length === 0 && <option value="">(chưa có lần đo nào)</option>}
+          {saved.runs.map((r) => (
+            <option key={r.runId} value={r.runId}>
+              {`#${r.runId} · ${r.projectName} · ${r.specimenName} · ${formatTime(r.startedAt)}`}
+            </option>
+          ))}
+        </select>
+        {saved.message && <span style={{ color: "#8bc34a" }}>{saved.message}</span>}
       </div>
 
-      {/* Body */}
+      {/* Nội dung */}
       <div style={s.body}>
-        {subTab === "graphing" && <GraphingPanel />}
-        {subTab === "reporting" && <ReportingPanel />}
-        {subTab === "overview" && <OutputOverviewPanel />}
-        {subTab === "live-data" && <LiveDataPanel />}
-        {subTab === "result-limits" && <ResultLimitsPanel />}
-        {subTab === "data-exporting" && <DataExportingPanel />}
+        {!saved.available ? (
+          <div style={{ padding: 40, textAlign: "center", color: "#8a919a" }}>Chỉ hỗ trợ bản Electron.</div>
+        ) : (
+          <>
+            {subTab === "overview" && <OutputOverviewPanel saved={saved} onView={() => setSubTab("results")} />}
+            {subTab === "results" && <ResultsPanel saved={saved} />}
+            {subTab === "graphing" && <GraphingPanel saved={saved} />}
+            {subTab === "data" && <MeasurementsPanel saved={saved} />}
+            {subTab === "export" && <DataExportingPanel saved={saved} />}
+          </>
+        )}
       </div>
     </div>
   );

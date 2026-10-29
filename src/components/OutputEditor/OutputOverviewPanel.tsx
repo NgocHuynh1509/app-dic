@@ -1,117 +1,127 @@
-import { useState } from "react";
+import type { CSSProperties } from "react";
 import { colors, s } from "./Styles";
+import { EMPTY_TEXT, chartSrc, dash, formatTime } from "./useSavedRuns";
+import type { SavedRuns } from "./useSavedRuns";
 
-interface OverviewSection {
-  id: string;
-  label: string;
-  count: number;
-  items: string[];
+interface Props {
+  saved: SavedRuns;
+  onView: () => void;
 }
 
-const SECTIONS: OverviewSection[] = [
-  { id: "plots", label: "Graphs / Plots", count: 2, items: ["Force vs. Position", "Force vs. Time"] },
-  { id: "results", label: "Calculated Results", count: 2, items: ["Break Stress", "Ultimate Force"] },
-  { id: "reports", label: "Reports", count: 2, items: ["Summary Report", "Single Report"] },
-  { id: "exports", label: "Data Exports", count: 1, items: ["CSV export on test complete"] },
-];
+const dis = (d: boolean): CSSProperties | undefined => (d ? { opacity: 0.45, cursor: "not-allowed" } : undefined);
 
-export default function OutputOverviewPanel() {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    plots: true,
-    results: true,
-    reports: true,
-    exports: true,
-  });
-
-  function toggle(id: string) {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
-  }
+export default function OutputOverviewPanel({ saved, onView }: Props) {
+  const { runs, runId, setRunId, detail } = saved;
+  const empty = runs.length === 0;
+  const overall = detail?.charts.find((c) => c.port === 0) ?? detail?.charts[0];
+  const resultOf = (port: number) => detail?.results.find((r) => r.port === port);
+  const shown = detail ? detail.ports.filter((p) => resultOf(p.port)) : [];
 
   return (
     <div style={s.twoColRow}>
-      {/* Left: general info */}
-      <div style={{ ...s.colPane, flex: "0 0 320px" }}>
-        <div style={s.panelHeader}>Output Information</div>
-        <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={s.fieldRow}>
-            <label style={{ flex: "0 0 90px" }}>Output Name:</label>
-            <input style={s.fieldInput} defaultValue="Generic Compression - Force vs. Position" />
-          </div>
-          <div style={{ ...s.fieldRow, alignItems: "flex-start" }}>
-            <label style={{ flex: "0 0 90px" }}>Description:</label>
-            <textarea
-              style={{ ...s.fieldInput, minHeight: 60, resize: "vertical" }}
-              defaultValue="Standard compression output used for generic foam and rubber specimens."
-            />
-          </div>
-          <div style={s.fieldRow}>
-            <label style={{ flex: "0 0 90px" }}>Test Standard:</label>
-            <input style={s.fieldInput} defaultValue="ASTM D575" />
-          </div>
-          <div style={s.fieldRow}>
-            <label style={{ flex: "0 0 90px" }}>Last Modified:</label>
-            <input style={s.fieldInput} readOnly value="9/16/2026 10:27 AM" />
-          </div>
+      {/* Trái: danh mục các lần đo */}
+      <div style={{ ...s.colPane, flex: "1.2 1 0%" }}>
+        <div style={s.panelHeader}>Danh mục các lần đo, tổng số: {runs.length}</div>
+        <div style={s.toolbar}>
+          <button style={{ ...s.toolbarBtn, ...dis(empty) }} disabled={empty} onClick={onView}>Xem kết quả (View)</button>
+          <button style={{ ...s.toolbarBtn, ...dis(empty) }} disabled={empty} onClick={() => void saved.exportPdf()}>
+            Xuất PDF (Export)
+          </button>
+          <button style={{ ...s.toolbarBtn, ...dis(empty) }} disabled={empty} onClick={() => void saved.remove()}>
+            Xóa (Delete)
+          </button>
         </div>
 
-        <div style={{ borderTop: `1px solid ${colors.border}` }}>
-          <div style={s.panelHeader}>Used By Methods</div>
-          <div style={{ padding: "6px 10px", fontSize: 12 }}>
-            <div>• Generic Compression</div>
-            <div>• Generic Compression - Foam</div>
-          </div>
-        </div>
+        {empty ? (
+          <div style={{ padding: 30, textAlign: "center", color: "#8a919a" }}>{EMPTY_TEXT}</div>
+        ) : (
+          <table style={s.table}>
+            <thead>
+              <tr>
+                <th style={s.th}>Mã</th>
+                <th style={s.th}>Project</th>
+                <th style={s.th}>Mẫu (Specimen)</th>
+                <th style={s.th}>Giờ / Ngày đo</th>
+                <th style={s.th}>Số dòng</th>
+              </tr>
+            </thead>
+            <tbody>
+              {runs.map((r) => (
+                <tr
+                  key={r.runId}
+                  style={{ cursor: "pointer", background: runId === r.runId ? colors.rowSelected : undefined }}
+                  onClick={() => setRunId(r.runId)}
+                  onDoubleClick={onView}
+                >
+                  <td style={s.td}>#{r.runId}</td>
+                  <td style={s.td}>{r.projectName}</td>
+                  <td style={s.td}>{r.specimenName}</td>
+                  <td style={s.td}>{formatTime(r.startedAt)}</td>
+                  <td style={s.td}>{r.rowCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      {/* Right: content checklist / preview tree */}
-      <div style={s.colPane}>
-        <div style={s.panelHeader}>Output Contents</div>
-        <div style={{ padding: 4 }}>
-          {SECTIONS.map((section) => (
-            <div key={section.id} style={{ borderBottom: `1px solid ${colors.border}` }}>
-              <button
-                onClick={() => toggle(section.id)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "#f4f6f7",
-                  border: "none",
-                  padding: "6px 8px",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  textAlign: "left",
-                }}
-              >
-                <span>
-                  {expanded[section.id] ? "▾" : "▸"} {section.label}
-                </span>
-                <span
-                  style={{
-                    background: colors.ribbonActive,
-                    color: "#fff",
-                    borderRadius: 10,
-                    padding: "1px 8px",
-                    fontSize: 10,
-                  }}
-                >
-                  {section.count}
-                </span>
-              </button>
-              {expanded[section.id] && (
-                <ul style={{ margin: 0, padding: "4px 8px 8px 28px", fontSize: 12 }}>
-                  {section.items.map((item) => (
-                    <li key={item} style={{ padding: "2px 0" }}>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              )}
+      {/* Phải: tóm tắt + biểu đồ */}
+      <div style={{ ...s.colPane, flex: "1.4 1 0%" }}>
+        <div style={s.panelHeader}>Tóm tắt lần đo</div>
+        {!detail ? (
+          <div style={{ padding: 30, textAlign: "center", color: "#8a919a" }}>{empty ? EMPTY_TEXT : "Đang tải..."}</div>
+        ) : (
+          <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div>
+              <div style={s.fieldRow}><label style={s.fieldLabel}>Project:</label><span>{detail.run.projectName}</span></div>
+              <div style={s.fieldRow}><label style={s.fieldLabel}>Mẫu:</label><span>{detail.run.specimenName}</span></div>
+              <div style={s.fieldRow}><label style={s.fieldLabel}>Thời gian đo:</label><span>{formatTime(detail.run.startedAt)}</span></div>
+              <div style={s.fieldRow}><label style={s.fieldLabel}>Số dòng đã lưu:</label><span>{detail.run.rowCount}</span></div>
             </div>
-          ))}
-        </div>
+
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={s.th}>ID</th>
+                  <th style={s.th}>Fm (kN)</th>
+                  <th style={s.th}>Rm (MPa)</th>
+                  <th style={s.th}>M (N/mm²)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.length === 0 && (
+                  <tr><td style={s.td} colSpan={4}>Không có kênh nào được bật khi đo.</td></tr>
+                )}
+                {shown.map((p) => {
+                  const r = resultOf(p.port);
+                  return (
+                    <tr key={p.port}>
+                      <td style={s.td}>NO.{p.port}</td>
+                      <td style={s.td}>{dash(r?.fm_kn, 2)}</td>
+                      <td style={s.td}>{dash(r?.rm_mpa, 0)}</td>
+                      <td style={s.td}>{dash(r?.modulus_mpa, 0)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div style={s.panelHeader}>Đồ thị kết quả thí nghiệm (Graph)</div>
+            {overall ? (
+              <div style={{ height: "clamp(180px, calc(100vh - 560px), 360px)", display: "flex", justifyContent: "center" }}>
+                <img
+                  src={chartSrc(overall.svg)}
+                  alt="Biểu đồ σ–ε"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                />
+              </div>
+            ) : (
+              <div style={{ padding: 20, textAlign: "center", color: "#8a919a" }}>
+                Chưa có biểu đồ. Xem lý do ở tab Biểu đồ hoặc trong file PDF.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

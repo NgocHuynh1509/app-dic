@@ -125,6 +125,64 @@ function computeTensile(dim, pts) {
   return out
 }
 
+// ---------- Tính kết quả uốn 3 điểm (ISO 178 / ASTM D790) ----------
+// h = chiều dày t, b = chiều rộng, L = khoảng cách 2 gối tựa (mm); pts = [{ f (N), s (mm) }]
+function computeBending(h, b, L, pts) {
+  const out = {
+    maxForce: null, deformAtMax: null, flexuralStrength: null, tangentModulus: null, chordModulus: null,
+    breakForce: null, deformAtBreak: null, stressAtBreak: null, strainAtBreakPct: null,
+  }
+  if (!(h > 0 && b > 0 && L > 0) || pts.length < 2) return out
+
+  const sigma = (f) => (3 * f * L) / (2 * b * h * h)
+  const eps = (s) => (6 * s * h) / (L * L)
+
+  let iMax = 0
+  pts.forEach((p, i) => { if (p.f > pts[iMax].f) iMax = i })
+  out.maxForce = pts[iMax].f
+  out.deformAtMax = pts[iMax].s
+  out.flexuralStrength = sigma(pts[iMax].f)
+
+  // Điểm phá hoại = điểm cuối của phiên đo
+  const last = pts[pts.length - 1]
+  out.breakForce = last.f
+  out.deformAtBreak = last.s
+  out.stressAtBreak = sigma(last.f)
+  out.strainAtBreakPct = eps(last.s) * 100
+
+  // Chord modulus: nội suy σ tại ε = 0.0005 và 0.0025 trên đoạn tăng tải
+  const stressAt = (target) => {
+    for (let i = 1; i <= iMax; i++) {
+      const e0 = eps(pts[i - 1].s), e1 = eps(pts[i].s)
+      if (e1 > e0 && e0 <= target && e1 >= target) {
+        const s0 = sigma(pts[i - 1].f), s1 = sigma(pts[i].f)
+        return s0 + ((s1 - s0) * (target - e0)) / (e1 - e0)
+      }
+    }
+    return null
+  }
+  const s1 = stressAt(0.0005), s2 = stressAt(0.0025)
+  if (s1 != null && s2 != null) out.chordModulus = (s2 - s1) / (0.0025 - 0.0005)
+
+  // Tangent modulus: độ dốc F–s lớn nhất (hồi quy tuyến tính cửa sổ trượt) trên đoạn tăng tải
+  const n = Math.max(5, Math.floor(iMax * 0.1))
+  let m = null
+  for (let i = 0; i + n <= iMax + 1; i++) {
+    let sx = 0, sy = 0, sxx = 0, sxy = 0
+    for (let j = i; j < i + n; j++) {
+      const x = pts[j].s, y = pts[j].f
+      sx += x; sy += y; sxx += x * x; sxy += x * y
+    }
+    const den = n * sxx - sx * sx
+    if (Math.abs(den) < 1e-12) continue
+    const slope = (n * sxy - sx * sy) / den
+    if (slope > 0 && (m == null || slope > m)) m = slope
+  }
+  if (m != null) out.tangentModulus = (L * L * L * m) / (4 * b * h * h * h)
+
+  return out
+}
+
 // ---------- DB helpers ----------
 function addColumn(table, col, type) {
   const cols = db.prepare(`PRAGMA table_info(${table})`).all()
@@ -135,19 +193,36 @@ function listPorts(specimenId) {
   return db.prepare('SELECT port, t, b, l0, lu, bu FROM specimen_ports WHERE specimen_id = ? ORDER BY port').all(specimenId)
 }
 
+const setupOf = (row) => ({
+  sampleLength: row?.sample_length ?? null,
+  supportSpan: row?.support_span ?? null,
+  loadPointPos: row?.load_point_pos ?? null,
+  bearingDia: row?.bearing_dia ?? null,
+  loadDia: row?.load_dia ?? null,
+  weightG: row?.weight_g ?? null,
+})
+
 function specimenInfo(row) {
   const runCount = db.prepare('SELECT COUNT(*) AS n FROM runs WHERE specimen_id = ?').get(row.id).n
-  return { id: row.id, projectId: row.project_id, name: row.name, createdAt: row.created_at, ports: listPorts(row.id), runCount }
+  return {
+    id: row.id, projectId: row.project_id, name: row.name, createdAt: row.created_at,
+    setup: setupOf(row), ports: listPorts(row.id), runCount,
+  }
 }
 
-function buildPdfHtml(specimenId) {
-  const sp = db.prepare('SELECT * FROM specimens WHERE id = ?').get(specimenId)
+const RUN_SELECT = `
+  SELECT r.id AS runId, r.started_at AS startedAt, r.row_count AS rowCount,
+         s.id AS specimenId, s.name AS specimenName, p.name AS projectName
+  FROM runs r JOIN specimens s ON s.id = r.specimen_id JOIN projects p ON p.id = s.project_id`
+
+function buildPdfHtml(runId) {
+  const run = db.prepare('SELECT * FROM runs WHERE id = ?').get(runId)
+  if (!run) return null
+  const sp = db.prepare('SELECT * FROM specimens WHERE id = ?').get(run.specimen_id)
   if (!sp) return null
   const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(sp.project_id)
-  const run = db.prepare('SELECT * FROM runs WHERE specimen_id = ? ORDER BY id DESC LIMIT 1').get(specimenId)
-  if (!run) return null
 
-  const ports = listPorts(specimenId)
+  const ports = listPorts(sp.id)
   const results = db.prepare('SELECT * FROM run_results WHERE run_id = ? ORDER BY port').all(run.id)
   const byPort = Object.fromEntries(results.map((r) => [r.port, r]))
   const charts = Object.fromEntries(
@@ -198,6 +273,30 @@ function buildPdfHtml(specimenId) {
   </body></html>`
 }
 
+async function exportRunPdf(e, runId) {
+  const html = buildPdfHtml(runId)
+  if (!html) return { ok: false, error: 'Lần đo không tồn tại.' }
+  const info = db.prepare('SELECT s.name FROM runs r JOIN specimens s ON s.id = r.specimen_id WHERE r.id = ?').get(runId)
+  const parent = BrowserWindow.fromWebContents(e.sender) ?? undefined
+  const target = await dialog.showSaveDialog(parent, {
+    defaultPath: `${String(info?.name ?? 'bao_cao').replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.pdf`,
+    filters: [{ name: 'PDF', extensions: ['pdf'] }],
+  })
+  if (target.canceled || !target.filePath) return { ok: false, error: '' }
+  const win = new BrowserWindow({
+    show: false,
+    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, javascript: false },
+  })
+  try {
+    await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
+    const pdf = await win.webContents.printToPDF({ pageSize: 'A4', printBackground: true })
+    fs.writeFileSync(target.filePath, pdf)
+    return { ok: true, path: target.filePath }
+  } finally {
+    win.destroy()
+  }
+}
+
 /**
  * @param {{ allow: (e: Electron.IpcMainInvokeEvent) => boolean }} opts
  */
@@ -234,6 +333,12 @@ function initDatabase({ allow }) {
       run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
       port INTEGER NOT NULL CHECK (port BETWEEN 0 AND 3), -- 0 = biểu đồ chung các cổng
       svg TEXT NOT NULL, PRIMARY KEY (run_id, port));
+    CREATE TABLE IF NOT EXISTS run_bending (
+      run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+      port INTEGER NOT NULL CHECK (port BETWEEN 1 AND 3),
+      max_force_n REAL, deform_at_max_mm REAL, flexural_strength_mpa REAL, tangent_modulus_mpa REAL,
+      chord_modulus_mpa REAL, break_force_n REAL, deform_at_break_mm REAL, flexural_stress_break_mpa REAL,
+      strain_at_break_pct REAL, PRIMARY KEY (run_id, port));
   `)
   // Migration cho DB tạo từ các bản trước
   addColumn('specimen_ports', 'lu', 'REAL')
@@ -242,6 +347,10 @@ function initDatabase({ allow }) {
   addColumn('measurements', 'stress_mpa', 'REAL')
   addColumn('measurements', 'strain_len', 'REAL') // ε = ΔL/Lo (mm/mm)
   for (const col of ['s0', 'fm_kn', 'rm_mpa', 'rel_mpa', 'fel_kn', 'modulus_mpa', 'a_pct']) addColumn('run_results', col, 'REAL')
+  // Thông số thử uốn (theo mẫu, không bắt buộc)
+  for (const col of ['sample_length', 'support_span', 'load_point_pos', 'bearing_dia', 'load_dia', 'weight_g']) {
+    addColumn('specimens', col, 'REAL')
+  }
 
   const handle = (channel, fn) =>
     ipcMain.handle(channel, (e, ...args) => {
@@ -269,8 +378,12 @@ function initDatabase({ allow }) {
     const valid = ports.length === 3 && ports.every((p, i) =>
       p.port === i + 1 && [p.t, p.b, p.l0].every((v) => Number.isFinite(v) && v > 0))
     if (!valid) throw new Error('t, b, L0 của 3 cổng phải là số > 0.')
+    const s = input?.setup ?? {}
     const tx = db.transaction(() => {
-      const r = db.prepare('INSERT INTO specimens (project_id, name) VALUES (?, ?)').run(input.projectId, name)
+      const r = db.prepare(`INSERT INTO specimens (project_id, name, sample_length, support_span, load_point_pos,
+        bearing_dia, load_dia, weight_g) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(input.projectId, name, optNum(s.sampleLength), optNum(s.supportSpan), optNum(s.loadPointPos),
+          optNum(s.bearingDia), optNum(s.loadDia), optNum(s.weightG))
       const ins = db.prepare('INSERT INTO specimen_ports (specimen_id, port, t, b, l0, lu, bu) VALUES (?, ?, ?, ?, ?, ?, ?)')
       for (const p of ports) ins.run(r.lastInsertRowid, p.port, p.t, p.b, p.l0, optNum(p.lu), optNum(p.bu))
       return r.lastInsertRowid
@@ -280,6 +393,8 @@ function initDatabase({ allow }) {
 
   handle('db:saveRun', (_e, specimenId, rows) => {
     if (!Array.isArray(rows) || !rows.length) return null
+    const sp = db.prepare('SELECT * FROM specimens WHERE id = ?').get(specimenId)
+    if (!sp) throw new Error('Không tìm thấy mẫu.')
     const dims = Object.fromEntries(listPorts(specimenId).map((p) => [p.port, p]))
 
     // ε = ΔL/Lo: mốc 0 = độ dài hợp lệ đầu tiên của kênh sau START;
@@ -328,13 +443,26 @@ function initDatabase({ allow }) {
 
       const insRes = db.prepare(`INSERT INTO run_results (run_id, port, s0, fm_kn, rm_mpa, rel_mpa, fel_kn, modulus_mpa, a_pct)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      const insBend = db.prepare(`INSERT INTO run_bending (run_id, port, max_force_n, deform_at_max_mm, flexural_strength_mpa,
+        tangent_modulus_mpa, chord_modulus_mpa, break_force_n, deform_at_break_mm, flexural_stress_break_mpa, strain_at_break_pct)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       const insChart = db.prepare('INSERT INTO run_charts (run_id, port, svg) VALUES (?, ?, ?)')
       const combined = []
       for (const port of [1, 2, 3]) {
         if (!enabledPorts.has(port) || !dims[port]) continue
+        const d = dims[port]
         const pts = curves[port]
-        const res = computeTensile(dims[port], pts)
+
+        // Phiếu kéo
+        const res = computeTensile(d, pts)
         insRes.run(runId, port, res.s0, res.fm, res.rm, res.rel, res.fel, res.modulus, res.aPct)
+
+        // Uốn 3 điểm: F (N) và độ võng s (mm) = ε × Lo (ΔL của cảm biến độ dài)
+        const bendPts = pts.filter((p) => p.eps != null).map((p) => ({ f: p.f * 1000, s: p.eps * d.l0 }))
+        const bend = computeBending(d.t, d.b, sp.support_span, bendPts)
+        insBend.run(runId, port, bend.maxForce, bend.deformAtMax, bend.flexuralStrength, bend.tangentModulus,
+          bend.chordModulus, bend.breakForce, bend.deformAtBreak, bend.stressAtBreak, bend.strainAtBreakPct)
+
         const plot = pts.filter((p) => p.eps != null)
         if (plot.length >= 2) {
           const series = {
@@ -355,28 +483,46 @@ function initDatabase({ allow }) {
     return tx()
   })
 
-  handle('db:exportPdf', async (e, specimenId) => {
-    const html = buildPdfHtml(specimenId)
-    if (!html) return { ok: false, error: 'Mẫu chưa có dữ liệu đã lưu.' }
-    const sp = db.prepare('SELECT name FROM specimens WHERE id = ?').get(specimenId)
-    const parent = BrowserWindow.fromWebContents(e.sender) ?? undefined
-    const target = await dialog.showSaveDialog(parent, {
-      defaultPath: `${String(sp.name).replace(/[\\/:*?"<>|]/g, '_')}_${Date.now()}.pdf`,
-      filters: [{ name: 'PDF', extensions: ['pdf'] }],
-    })
-    if (target.canceled || !target.filePath) return { ok: false, error: '' }
-    const win = new BrowserWindow({
-      show: false,
-      webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, javascript: false },
-    })
-    try {
-      await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
-      const pdf = await win.webContents.printToPDF({ pageSize: 'A4', printBackground: true })
-      fs.writeFileSync(target.filePath, pdf)
-      return { ok: true, path: target.filePath }
-    } finally {
-      win.destroy()
+  // ---------- Đọc dữ liệu đã lưu (cho màn hình Output) ----------
+  handle('db:listAllRuns', () => db.prepare(`${RUN_SELECT} ORDER BY r.id DESC`).all())
+
+  handle('db:getRunDetail', (_e, runId) => {
+    const run = db.prepare(`${RUN_SELECT} WHERE r.id = ?`).get(runId)
+    if (!run) return null
+    const sp = db.prepare('SELECT * FROM specimens WHERE id = ?').get(run.specimenId)
+    return {
+      run,
+      setup: setupOf(sp),
+      ports: listPorts(run.specimenId),
+      results: db.prepare('SELECT * FROM run_results WHERE run_id = ? ORDER BY port').all(runId),
+      bending: db.prepare('SELECT * FROM run_bending WHERE run_id = ? ORDER BY port').all(runId),
+      charts: db.prepare('SELECT port, svg FROM run_charts WHERE run_id = ? ORDER BY port').all(runId),
     }
+  })
+
+  handle('db:listMeasurements', (_e, runId, port, offset, limit) => {
+    const p = Number(port)
+    const usePort = p >= 1 && p <= 3
+    const lim = Math.min(Math.max(Number(limit) || 100, 1), 500)
+    const off = Math.max(Number(offset) || 0, 0)
+    const where = usePort ? 'run_id = ? AND enabled = 1 AND channel = ?' : 'run_id = ? AND enabled = 1'
+    const args = usePort ? [runId, p] : [runId]
+    const total = db.prepare(`SELECT COUNT(*) AS n FROM measurements WHERE ${where}`).get(...args).n
+    const rows = db.prepare(`SELECT elapsed_s, channel, raw, delta, filtered, strain, length_mm, force_kn, stress_mpa, strain_len
+      FROM measurements WHERE ${where} ORDER BY id LIMIT ? OFFSET ?`).all(...args, lim, off)
+    return { total, rows }
+  })
+
+  handle('db:deleteRun', (_e, runId) => {
+    db.prepare('DELETE FROM runs WHERE id = ?').run(runId) // cascade: measurements, run_results, run_bending, run_charts
+    return true
+  })
+
+  handle('db:exportRunPdf', (e, runId) => exportRunPdf(e, runId))
+  handle('db:exportPdf', (e, specimenId) => {
+    const run = db.prepare('SELECT id FROM runs WHERE specimen_id = ? ORDER BY id DESC LIMIT 1').get(specimenId)
+    if (!run) return { ok: false, error: 'Mẫu chưa có dữ liệu đã lưu.' }
+    return exportRunPdf(e, run.id)
   })
 }
 

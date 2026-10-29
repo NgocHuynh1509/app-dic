@@ -30,8 +30,13 @@ contextBridge.exposeInMainWorld('dbAPI', {
   listSpecimens: (projectId) => ipcRenderer.invoke('db:listSpecimens', projectId),
   createSpecimen: (input) => ipcRenderer.invoke('db:createSpecimen', input),
   saveRun: (specimenId, rows) => ipcRenderer.invoke('db:saveRun', specimenId, rows),
-
   exportPdf: (specimenId) => ipcRenderer.invoke('db:exportPdf', specimenId),
+  // Màn hình Output
+  listAllRuns: () => ipcRenderer.invoke('db:listAllRuns'),
+  getRunDetail: (runId) => ipcRenderer.invoke('db:getRunDetail', runId),
+  listMeasurements: (runId, port, offset, limit) => ipcRenderer.invoke('db:listMeasurements', runId, port, offset, limit),
+  deleteRun: (runId) => ipcRenderer.invoke('db:deleteRun', runId),
+  exportRunPdf: (runId) => ipcRenderer.invoke('db:exportRunPdf', runId),
 });
 
 // Khoá license LOCAL (key 3 / 7 ngày) - dùng bởi LocalLicenseGate
